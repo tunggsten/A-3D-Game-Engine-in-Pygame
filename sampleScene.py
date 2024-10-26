@@ -13,10 +13,11 @@ player = Abstract("Player", Matrix([[0],
                                     [-4]]))
 origin.add_child_relative(player)
 
-camera = Camera("Camera", Matrix([[0],
-                                  [0],
-                                  [0]]), I3, 60)
+camera = Camera("Camera", ORIGIN, I3, 60)
 player.add_child_relative(camera)
+
+listener = Listener("Listener", ORIGIN, I3, 1, 0.3, [])
+player.add_child_relative(listener)
 
 blawg = Texture("blawg.png")
 
@@ -52,7 +53,7 @@ floor = Plane("Ground", (4, 4), (0, 0, 0), True, Matrix([[0],
                                                                        [0, 4, 0],
                                                                        [0, 0, 4]]))
 
-environment.add_child_relative(floor) 
+environment.add_child_relative(floor)
 
 floor.set_pattern_triangles((0, 0, 0), (108, 108, 108))
 backWall.set_pattern_triangles((0, 0, 0), (108, 108, 108))
@@ -63,6 +64,9 @@ backWall.change_tris_to_gradient((248, 54, 119), (58, 244, 189), (229, 249, 54))
 backWall.set_distortion_relative(Matrix([[1, 0, 0],
                                          [0, 1, 0],
                                          [0, 0, 1]]).apply(backWall.get_distortion_relative()))
+
+boom = SoundEffect("Boom", ORIGIN, I3, "boom.wav", 0.8, [])
+teapot.add_child_relative(boom)
 
 
 
@@ -77,15 +81,15 @@ while running:
     startTime = time.time()
 
     events = pygame.event.get()
-    
+
     for event in events:
         if event.type == pygame.QUIT:
             running = False
             
     playerMovement = [[0],
-                      [0],
-                      [0]]
-    
+                        [0],
+                        [0]]
+
     keys = pygame.key.get_pressed()
     if keys[pygame.K_w]:
         playerMovement[2] = [1]
@@ -101,6 +105,9 @@ while running:
         playerMovement[1] = [1]
     if keys[pygame.K_LSHIFT]:
         playerMovement[1] = [-1]
+
+    if keys[pygame.K_b]:
+        boom.play()
 
     player.translate_relative(Matrix(playerMovement).set_magnitude(movementSpeed * frameDelta))
         
@@ -119,6 +126,8 @@ while running:
     window.fill((255, 255, 255))
 
     camera.render()
+
+    listener.listen()
         
     frameDelta = time.time() - startTime
 
@@ -130,4 +139,5 @@ while running:
     except:
         print("Very fast")
         
+
     pygame.display.flip()
