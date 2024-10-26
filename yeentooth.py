@@ -1572,27 +1572,16 @@ class Listener(Abstract):
                 # Because the x axis is just 1, 0, 0, the dot product is just the x component.
 
                 angle = -dotProduct / distance
-                print(f"angle: {angle} \ndotProduct: {dotProduct}\ndistance = {distance} directionVector: {directionVector.get_contents()}")
 
                 # The magnitude of the x axis is 1, and we calculated the other magnitude earlier so we can just use that.
 
                 baseVolume = clamp(self.volume * sound.volume * (1 / ((distance / self.sensitivity) ** 2)), 0, sound.volume)
 
-                print(f"baseVolume: {baseVolume}")
-
                 # Okay, now we're just quieting the further ear.
                 if directionVector.get_contents()[0][0] > 0:
                     channel.set_volume(baseVolume * (1 - (-angle * HEADSHADOWAMOUNT)), baseVolume)
-
-                    print(f"Right: {baseVolume}")
-                    print(f"Left: {baseVolume} * (1 - ({-angle} * {HEADSHADOWAMOUNT}))")
-                    print(f"Equals {baseVolume * (1 - (-angle * HEADSHADOWAMOUNT))}")
                 else:
                     channel.set_volume(baseVolume, baseVolume * (1 - (angle * HEADSHADOWAMOUNT)))
-
-                    print(f"Right: {baseVolume} * (1 - ({angle} * {HEADSHADOWAMOUNT}))")
-                    print(f"Equals {baseVolume * (1 - (angle * HEADSHADOWAMOUNT))}")
-                    print(f"Left: {baseVolume}")
 
 
 
