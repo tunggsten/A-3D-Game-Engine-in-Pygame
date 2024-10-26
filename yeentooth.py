@@ -375,13 +375,9 @@ ORIGIN = Matrix([[0],
 
 class Abstract:
     def __init__(self, 
-                 name:str=None,
                  location:Matrix=None, 
                  distortion:Matrix=None, 
-                 tags:list[str]=None,
-                 script=None,
-                 parent=None, 
-                 children=None): # I'm well aware this is clapped. 
+                 tags:list[str]=None): # I'm well aware this is clapped. 
         
                              # Unfortunately for people unlucky enough to see this, default values in Python
                              # are created at the definition of the function, instead of when it's called. 
@@ -392,56 +388,38 @@ class Abstract:
                              
                              # Guess how long it took to find that out while debugging.
         
-        self.name = "Abstract" if not name else name # I hate If Expressions too if that's any consolation
         
-                                                     # Sorry, I mean
-                                                     
-                                                     # if that's any consolation:
-                                                     #     I hate If Expressions too
+            
+        # Just to clarify, the locations and distortions are all stored in objective space.
         
-        self.parent = parent if parent else None
-        self.children = children if children else []
+        # If you're wondering why I don't just store the relative locations, it's
+        # becasue I tried it and it was slow.
+            
+        # In every raster cycle, you need to find the positions of every vertex
+        # relative to the camera. With objective coordinates being stored, you
+        # just have to read those from memory and compare them. However, with
+        # relative coordinates I had to make a recursive function which
+        # would spend four fucking years every frame traversing all the way up
+        # the scene tree to the objective origin doing matrix applications for
+        # each link.
         
-        if parent:
-            self.objectiveLocation = self.parent.objectiveLocation.add(self.parent.objectiveDistortion.apply(location if location else ORIGIN))
-            self.objectiveDistortion = self.parent.objectiveDistortion.apply(distortion if distortion else I3) 
-            
-            # That looks confusing but it just generates the appropriate objective
-            # location such that it's at the position you entered relative to its
-            # superstract.
-            
-            # If you're wondering why I don't just store the relative locations, it's
-            # becasue I tried it and it was slow.
-                
-            # In every raster cycle, you need to find the positions of every vertex
-            # relative to the camera. With objective coordinates being stored, you
-            # just have to read those from memory and compare them. However, with
-            # relative coordinates I had to make a recursive function which
-            # would spend four fucking years every frame traversing all the way up
-            # the scene tree to the objective origin doing matrix applications for
-            # each link.
-            
-            # While storing it like this makes it harder to find local coordinates,
-            # you only need to compare the current abstract with its superstract
-            # to find them, whereas finding objective coordinates with stored 
-            # coordinates in local space requires analysing the entire scene tree.
-            
-            
-        else:
-            self.objectiveLocation =  location if location else ORIGIN
-            self.objectiveDistortion = distortion if distortion else I3
+        # While storing it like this makes it harder to find local coordinates,
+        # you only need to compare the current abstract with its superstract
+        # to find them, whereas finding objective coordinates with stored 
+        # coordinates in local space requires analysing the entire scene tree.
 
-        self.script = None # Implement this later
+        self.parent = None # You used to be able to define these at initialisation but I literally never used it
+        self.children = []
+        
+        self.objectiveLocation = location if location else ORIGIN
+        self.objectiveDistortion = distortion if distortion else I3     # I hate If Expressions too if that's any consolation
+        
+                                                                        # Sorry, I mean
+                                                                        
+                                                                        # if that's any consolation:
+                                                                        #     I hate If Expressions too
         
         self.tags = tags if tags else []
-        
-        
-        
-    def get_name(self):
-        return self.name
-    
-    def set_name(self, name: str):
-        self.name = name
         
         
         
@@ -745,7 +723,7 @@ class Abstract:
                             
 # Important default abstracts:
 
-ROOT = Abstract("Root")
+ROOT = Abstract()
 
     
 
@@ -1043,7 +1021,7 @@ class Tri(Abstract): # This should be a child to an abstract which will serve as
     def __init__(self, 
                  vertices:list[list[float]], 
                  albedo:tuple, lit:bool, tags:list[str]=None):   
-        super().__init__("Tri", ORIGIN, I3, ["Tri"] + tags if tags else [])
+        super().__init__(ORIGIN, I3, ["Tri"] + tags if tags else [])
         
         # Vertices should be an array of 3 arrays.
         # Each array is a coordinate, done in clockwise 
@@ -1129,14 +1107,10 @@ class TextureTri(Tri): # Tri with a texture
 
 class Mesh(Abstract):
     def __init__(self, 
-                 name:str=None,
                  location:Matrix=None, 
                  distortion:Matrix=None, 
-                 tags:list[str]=None,
-                 script=None,
-                 parent=None, 
-                 children=None):
-        super().__init__(name, location, distortion, tags, script, parent, children)
+                 tags:list[str]=None):
+        super().__init__(location, distortion, tags)
     
     def change_tris_to_gradient(self, colour1, colour2, colour3):
         for tri in self.get_substracts_of_type(Tri) + self.get_substracts_of_type(TextureTri):
@@ -1154,19 +1128,16 @@ class Mesh(Abstract):
 
 class Plane(Mesh):
     def __init__(self, 
-                 name:str, 
                  quadResolution:tuple,
                  colour:tuple, 
                  lit:bool=None,
                  location:Matrix=None, 
                  distortion:Matrix=None,
-                 tags:list[str]=None,
-                 script=None):
-        super().__init__(name, 
-                         location if location else ORIGIN, 
+                 tags:list[str]=None,):
+        super().__init__(location if location else ORIGIN, 
                          distortion if distortion else I3,
-                         tags if tags else [],
-                         script)
+                         tags if tags else [])
+        
         self.quadResolution = quadResolution # Number of quads along each side
         self.colour = colour
         self.lit = lit if lit is not None else False
@@ -1249,18 +1220,14 @@ class Plane(Mesh):
 
 class Cube(Mesh):
     def __init__(self, 
-                 name:str, 
                  colour:tuple, 
                  lit:bool=None,
                  location:Matrix=None, 
                  distortion:Matrix=None,
-                 tags:list[str]=None,
-                 script=None):
-        super().__init__(name, 
-                         location if location else ORIGIN, 
+                 tags:list[str]=None):
+        super().__init__(location if location else ORIGIN, 
                          distortion if distortion else I3,
-                         tags if tags else [],
-                         script)
+                         tags if tags else [])
         self.colour = colour
         self.lit = lit if lit is not None else False
 
@@ -1337,21 +1304,17 @@ class Cube(Mesh):
 
 class Wavefront(Mesh):
     def __init__(self, 
-                 name:str, 
                  obj:str,
                  colour:tuple, 
                  lit:bool=None,
                  location:Matrix=None, 
                  distortion:Matrix=None,
                  tags:list[str]=None,
-                 script=None,
                  **kwargs):
         
-        super().__init__(name, 
-                         location if location else ORIGIN, 
+        super().__init__(location if location else ORIGIN, 
                          distortion if distortion else I3,
-                         tags if tags else [],
-                         script)
+                         tags if tags else [])
         
         self.obj = obj # Beware! This only works if your Wavefront file
                        # is split into triangles. No quads! Especially no n-gons.
@@ -1430,8 +1393,8 @@ class Wavefront(Mesh):
 
         
 class Camera(Abstract):
-    def __init__(self, name:str, location, distortion, fieldOfView:float):
-        super().__init__(name, location, distortion, ["Camera"])
+    def __init__(self, location, distortion, fieldOfView:float):
+        super().__init__(location, distortion, ["Camera"])
 
         self.perspectiveConstant = math.tan((fieldOfView / 180) * math.pi / 2) / (DISPLAY.resolution[1] / 2)
         # This converts the field of view into radians, then finds the perspective
@@ -1530,9 +1493,7 @@ class Camera(Abstract):
 
 
 
-SPEEDOFSOUND = 340.29 # Speed of sound in meters per second
-
-HEADSHADOWAMOUNT = 0.9 # When you're pointed 90 degrees from something making a sound,
+HEADSHADOWAMOUNT = 0.7 # When you're pointed 90 degrees from something making a sound,
                        # you'll hear it at a normal volume in your ear closest to the sound.
                        # However, for your other ear, your head's in the way; so it sounds quieter.
 
@@ -1544,12 +1505,18 @@ HEADSHADOWAMOUNT = 0.9 # When you're pointed 90 degrees from something making a 
 
 
 class SoundEffect(Abstract):
-    def __init__(self, name, location, distortion, sound, volume, tags):
-        super().__init__(name, location, distortion, tags)
+    def __init__(self, 
+                 sound:str, 
+                 volume:float=None, 
+                 location:Matrix=None, 
+                 distortion:Matrix=None, 
+                 tags:list[str]=None):
+        
+        super().__init__(location, distortion, tags)
 
         self.sound = pygame.mixer.Sound(sound)
         self.channel = None
-        self.volume = volume
+        self.volume = volume if volume else 1
 
     def play(self, loops:int=None):
         self.sound.stop()
@@ -1563,11 +1530,20 @@ class SoundEffect(Abstract):
 
 
 class Listener(Abstract):
-    def __init__(self, name, location, distortion, volume, stereoWidth, tags):
-        super().__init__(name, location, distortion, tags)
+    def __init__(self, 
+                 volume:float, 
+                 sensitivity:float=None, 
+                 location:Matrix=None, 
+                 distortion:Matrix=None, 
+                 tags:list[str]=None):
+        
+        super().__init__(location, distortion, tags)
 
         self.volume = volume
-        self.stereoWidth = stereoWidth # This is how far apart the listener's "ears" are. Important for stereo
+        self.sensitivity = sensitivity if sensitivity else 1 # This scales how quiet things get with distance
+                                                             # A sensitivity of 2 means you need to move twice
+                                                             # the distance away from something to make it as quiet
+                                                             # as it would be at 1
 
     def listen(self):
         sounds = ROOT.get_substracts_of_type(SoundEffect)
@@ -1600,13 +1576,23 @@ class Listener(Abstract):
 
                 # The magnitude of the x axis is 1, and we calculated the other magnitude earlier so we can just use that.
 
-                baseVolume = clamp(sound.volume * (1 / (distance ** 2)), 0, 1)
+                baseVolume = clamp(self.volume * sound.volume * (1 / ((distance / self.sensitivity) ** 2)), 0, sound.volume)
+
+                print(f"baseVolume: {baseVolume}")
 
                 # Okay, now we're just quieting the further ear.
                 if directionVector.get_contents()[0][0] > 0:
-                    channel.set_volume(baseVolume, baseVolume * (1 - (angle * HEADSHADOWAMOUNT)))
-                else:
                     channel.set_volume(baseVolume * (1 - (-angle * HEADSHADOWAMOUNT)), baseVolume)
+
+                    print(f"Right: {baseVolume}")
+                    print(f"Left: {baseVolume} * (1 - ({-angle} * {HEADSHADOWAMOUNT}))")
+                    print(f"Equals {baseVolume * (1 - (-angle * HEADSHADOWAMOUNT))}")
+                else:
+                    channel.set_volume(baseVolume, baseVolume * (1 - (angle * HEADSHADOWAMOUNT)))
+
+                    print(f"Right: {baseVolume} * (1 - ({angle} * {HEADSHADOWAMOUNT}))")
+                    print(f"Equals {baseVolume * (1 - (angle * HEADSHADOWAMOUNT))}")
+                    print(f"Left: {baseVolume}")
 
 
 
@@ -1642,8 +1628,8 @@ GRAVFIELDSTRENGTH = 9.81 # The strength of the scene's gravitational field
                          # It's named like a constant but you're free to change it if you want
 
 class Body(Abstract):
-    def __init__(self, name:str, location:Matrix, velocity:Matrix, angularVelocity:Matrix, mass:float, dynamic:bool=None):
-        super().__init__(name, location)
+    def __init__(self, location:Matrix, velocity:Matrix, angularVelocity:Matrix, mass:float, dynamic:bool=None):
+        super().__init__(location)
         
         self.velocity = velocity # A 3D collumb vector measured in meters per second (ms^-1)
         self.angularVelocity = angularVelocity

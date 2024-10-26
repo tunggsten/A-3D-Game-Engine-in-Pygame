@@ -2,27 +2,26 @@ from yeentooth import *
 import time
 
 
-origin = Abstract("Origin")
+origin = Abstract()
 ROOT.add_child_relative(origin)
 
-environment = Abstract("Environment")
+environment = Abstract()
 origin.add_child_relative(environment)
 
-player = Abstract("Player", Matrix([[0],
-                                    [0],
-                                    [-4]]))
+player = Abstract(Matrix([[0],
+                          [0],
+                          [-4]]))
 origin.add_child_relative(player)
 
-camera = Camera("Camera", ORIGIN, I3, 60)
+camera = Camera(ORIGIN, I3, 60)
 player.add_child_relative(camera)
 
-listener = Listener("Listener", ORIGIN, I3, 1, 0.3, [])
+listener = Listener(1, 2)
 player.add_child_relative(listener)
 
 blawg = Texture("blawg.png")
 
-teapot = Wavefront("Teapot",
-                   "lowPolyUtahTeapot.obj",
+teapot = Wavefront("lowPolyUtahTeapot.obj",
                    (0, 0, 0),
                    True,
                    Matrix([[0],
@@ -33,25 +32,25 @@ teapot = Wavefront("Teapot",
 
 environment.add_child_relative(teapot)
 
-leftWall = Plane("LeftWall", (4, 4), (0, 0, 0), True, Matrix([[-2],
-                                                              [1],
-                                                              [0]]), Matrix([[0, 4, 0],
-                                                                             [-4, 0, 0],
-                                                                             [0, 0, 4]]))
+leftWall = Plane((4, 4), (0, 0, 0), True, Matrix([[-2],
+                                                  [1],
+                                                  [0]]), Matrix([[0, 4, 0],
+                                                                 [-4, 0, 0],
+                                                                 [0, 0, 4]]))
 environment.add_child_relative(leftWall)
 
-backWall = Plane("BackWall", (4, 4), (0, 0, 0), True, Matrix([[0],
-                                                        [1],
-                                                        [2]]), Matrix([[4, 0, 0],
-                                                                       [0, 0, 4],
-                                                                       [0, -4, 0]]))
+backWall = Plane((4, 4), (0, 0, 0), True, Matrix([[0],
+                                                  [1],
+                                                  [2]]), Matrix([[4, 0, 0],
+                                                                 [0, 0, 4],
+                                                                 [0, -4, 0]]))
 environment.add_child_relative(backWall)
 
-floor = Plane("Ground", (4, 4), (0, 0, 0), True, Matrix([[0],
-                                                        [-1],
-                                                        [0]]), Matrix([[4, 0, 0],
-                                                                       [0, 4, 0],
-                                                                       [0, 0, 4]]))
+floor = Plane((4, 4), (0, 0, 0), True, Matrix([[0],
+                                               [-1],
+                                               [0]]), Matrix([[4, 0, 0],
+                                                              [0, 4, 0],
+                                                              [0, 0, 4]]))
 
 environment.add_child_relative(floor)
 
@@ -65,7 +64,7 @@ backWall.set_distortion_relative(Matrix([[1, 0, 0],
                                          [0, 1, 0],
                                          [0, 0, 1]]).apply(backWall.get_distortion_relative()))
 
-boom = SoundEffect("Boom", ORIGIN, I3, "boom.wav", 0.8, [])
+boom = SoundEffect("boom.wav", 0.4)
 teapot.add_child_relative(boom)
 
 
