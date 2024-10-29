@@ -1,6 +1,7 @@
 from yeentooth import *
+import pygame
 import time
-
+import random
 
 origin = Abstract()
 ROOT.add_child_relative(origin)
@@ -18,6 +19,18 @@ player.add_child_relative(camera)
 
 listener = Listener(1, 2)
 player.add_child_relative(listener)
+
+playerTopBody = Body(1, 1, False)
+playerTopCollider = SphereCollider(0.5, playerTopBody, Matrix([[0],
+                                                            [0.25],
+                                                            [0]]))
+player.add_child_relative(playerTopBody)
+
+playerBottomBody = Body(1, 1, False)
+playerBottomCollider = SphereCollider(0.5, playerBottomBody, Matrix([[0],
+                                                            [-0.25],
+                                                            [0]]))
+player.add_child_relative(playerBottomBody)
 
 blawg = Texture("blawg.png")
 
@@ -46,17 +59,45 @@ backWall = Plane((4, 4), (0, 0, 0), True, Matrix([[0],
                                                                  [0, -4, 0]]))
 environment.add_child_relative(backWall)
 
-floor = Plane((4, 4), (0, 0, 0), True, Matrix([[0],
-                                               [-1],
-                                               [0]]), Matrix([[4, 0, 0],
-                                                              [0, 4, 0],
-                                                              [0, 0, 4]]))
+# Floor
+
+floor = Body(1, 0.8, False, Matrix([[2],
+                                    [-1],
+                                    [-2]]))
 
 environment.add_child_relative(floor)
 
-floor.set_pattern_triangles((0, 0, 0), (108, 108, 108))
+floorCollider = PlaneCollider(8, 8, floor)
+
+floorVisual = Plane((8, 8), (0, 0, 0), True, ORIGIN, I3.multiply_contents(8))
+floor.add_child_relative(floorVisual)
+
+# Ball
+
+for i in range(4):
+    ball = Body(1, 0.8, True, Matrix([[random.random() * 2 + 2],
+                                      [1],
+                                      [-random.random() * 2 + 1]]))
+    environment.add_child_relative(ball)
+
+    ball.velocity = Matrix([[random.random()],
+                            [0],
+                            [-random.random()]])
+    
+    ball.add_tag(f"Ball {i}")
+
+    ballCollider = SphereCollider(0.25, ball)
+
+    ballVisual = Cube((200, 200, 200), True, ORIGIN, I3.multiply_contents(0.5))
+    ballVisual.change_tris_to_gradient((248, 54, 119), (58, 244, 189), (229, 249, 54))
+
+    ball.add_child_relative(ballVisual)
+
+
+floorVisual.set_pattern_triangles((0, 0, 0), (108, 108, 108))
 backWall.set_pattern_triangles((0, 0, 0), (108, 108, 108))
 leftWall.set_pattern_triangles((252, 252, 252), (108, 108, 108))
+
 
 backWall.change_tris_to_gradient((248, 54, 119), (58, 244, 189), (229, 249, 54))
 
@@ -78,6 +119,8 @@ frameDelta = 0
 
 while running:
     startTime = time.time()
+
+    print(f"The floor is dynamic {floor.dynamic}")
 
     events = pygame.event.get()
 
@@ -121,9 +164,10 @@ while running:
         camera.rotate_euler_radians(lookSpeed * frameDelta, 0, 0)
 
     teapot.rotate_euler_radians(frameDelta, frameDelta, -frameDelta)
+
+    process_bodies(frameDelta)
         
     window.fill((255, 255, 255))
-
     camera.render()
 
     listener.listen()

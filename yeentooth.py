@@ -307,6 +307,23 @@ class Matrix:
                 result[row].append(self.contents[row][collumb] - contentsToSubtract[row][collumb])
         
         return Matrix(result)
+    
+    def multiply(self, coefficientMatrix): # LMFAO I'M ADDING THIS BIT SUPER LATE I'VE WRITTEN 2000 LINES BY NOW
+        if self.order != coefficientMatrix.get_order():
+            print("These have different orders dumbass you can't subtract them")
+            return None
+        
+        contentsToMultiply = coefficientMatrix.get_contents()
+        
+        result = []
+        
+        for row in range(self.order[0]):
+            result.append([])
+            
+            for collumb in range(self.order[1]):
+                result[row].append(self.contents[row][collumb] * contentsToMultiply[row][collumb])
+        
+        return Matrix(result)
 
     def apply(self, right): # Matrix multiplication isn't commutative, so we have one
                             # on the left, and one on the right.
@@ -1477,7 +1494,7 @@ class Camera(Abstract):
         
         for tri in tris:
             self.project_tri(locationMatrix, inversion, tri, DEPTHBUFFER)
-
+        
         DISPLAY.render_image(window, (0, 0))
 
 
@@ -1587,6 +1604,8 @@ class Listener(Abstract):
 
 # ---------------- PHYSICS OBJECTS ----------------
 
+
+
 # I'm probably not going to finish these but they're here if I or 
 # someone else wants to add them in the future.
 
@@ -1594,12 +1613,12 @@ class Listener(Abstract):
 
 # Since units are important here, let's establish some conventions:
 
-UNITSCALE = 1 # This is how many meters one unit is equivalent to.
+UNITSCALE = 0.5 # This is how many meters one unit is equivalent to.
 
               # I'm doing this 'cause lots of engines let you change it.
 
               # Like imagine building a mech sim, but you have to keep the physics
-              # engine to scale, so your player mesh ends up being 400 units tall.
+              # engine to scale, so your player mesh ends up being 400 units tall
 
               # Not ideal.
 
@@ -1612,19 +1631,400 @@ STEPSCALE = 1 # This is how many simulated seconds one second at runtime is equi
 GRAVFIELDSTRENGTH = 9.81 # The strength of the scene's gravitational field 
                          # measured in Newtons per kilogram (NKg^-1)
 
-                         # It's also the acceleration things will fall at in meters per second per second (ms^-2)
+                         # It's also the acceleration things will fall at in units per second per second (ms^-2)
 
                          # It's named like a constant but you're free to change it if you want
 
-class Body(Abstract):
-    def __init__(self, location:Matrix, velocity:Matrix, angularVelocity:Matrix, mass:float, dynamic:bool=None):
-        super().__init__(location)
+GRAVDIRECTION = Matrix([[0],
+                        [-1],
+                        [0]])
+
+
+
+class SphereCollider(Abstract):
+    def __init__(self, radius:float, body:Abstract=None, location:Matrix=None, distortion:Matrix=None, tags:list[str]=None):
+        super().__init__(location, distortion, tags)
+
+        self.radius = radius
+
+        if body:
+            print(f"Setting {self.tags} as a collider")
+            self.body = body
+            body.set_collider(self)
+        else:
+            self.body = None
+
+        self.intersectionMethods = {
+            SphereCollider : self.intersect_sphere, 
+            PlaneCollider : self.intersect_plane
+        }
+
+        self.collisionNormalMethods = {
+            SphereCollider : self.get_collision_normal_sphere,
+            PlaneCollider : self.get_collision_normal_plane
+        }
+
+    def intersect_sphere(self, sphere:Abstract, collide:bool=False):
+        difference = sphere.objectiveLocation.subtract(self.objectiveLocation)
+
+        if difference.get_magnitude() < self.radius + sphere.radius:
+            if collide:
+                if sphere.body.dynamic:
+                    if self.body.dynamic:
+                        sphere.body.set_location_objective(sphere.body.objectiveLocation.add(difference.multiply_contents(0.5)))
+                        self.body.set_location_objective(self.body.objectiveLocation.subtract(difference.multiply_contents(0.5)))
+
+                    else:
+                        sphere.body.set_location_objective(sphere.body.objectiveLocation.add(difference))
+
+                else:
+                    if self.body.dynamic:
+                        self.body.set_location_objective(self.body.objectiveLocation.subtract(difference))
+                    
+            return True
+
+        return False
+    
+    def intersect_plane(self, plane:Abstract, collide:bool=False):
+        relativeToPlane = plane.objectiveDistortion.get_3x3_inverse().apply(self.objectiveLocation.subtract(plane.objectiveLocation)).get_contents()
+
+        if (abs(relativeToPlane[0][0]) < plane.width / 2 and 
+                relativeToPlane[1][0] < self.radius and 
+                abs(relativeToPlane[2][0]) < plane.length / 2):
+            
+            if collide and self.body.dynamic:
+                difference = Matrix([[0], 
+                                     [self.radius - relativeToPlane[1][0]],
+                                     [0]]) 
+                
+                objectiveDifference = plane.body.objectiveDistortion.apply(difference)
+                
+                self.body.translate_objective(objectiveDifference) # Now the sphere is no longer intersecting the plane
+
+            return True
         
-        self.velocity = velocity # A 3D collumb vector measured in meters per second (ms^-1)
-        self.angularVelocity = angularVelocity
-        self.mass = mass # Mass in kilograms (Kg)
+        return False
+    
+    def intersect(self, collider:Abstract, collide:bool=False):
+        return self.intersectionMethods[type(collider)](collider, collide)
+    
 
-        self.dynamic = dynamic if dynamic else True
+    
+    def get_collision_normal_sphere(self, sphere):
+        direction = sphere.objectiveLocation.subtract(sphere.objectiveLocation)
 
-    def process(self):
-        pass
+        try:
+            return direction.set_magnitude(1) # This just makes its magnitude 1
+        except:
+            return ORIGIN
+        
+    def get_collision_normal_plane(self, plane):
+        direction = plane.objectiveDistortion.apply(Matrix([[0],
+                                              [1],
+                                              [0]]))
+        
+        return direction.set_magnitude(1)
+    
+    def get_collision_normal(self, collider):
+        return self.collisionNormalMethods[type(collider)](collider)
+    
+
+    
+class PlaneCollider(Abstract):
+    def __init__(self, width:float, length:float, body:Abstract=None, location:Matrix=None, distortion:Matrix=None, tags:list[str]=None):
+        super().__init__(location, distortion, tags)
+
+        self.length = length
+        self.width = width
+
+        if body:
+            self.body = body
+            body.set_collider(self)
+        else:
+            self.body = None
+
+        self.intersectionMethods = {
+            SphereCollider : self.intersect_sphere, 
+            PlaneCollider : self.intersect_plane
+        }
+
+        self.collisionNormalMethods = {
+            SphereCollider : self.get_collision_normal_sphere, 
+            PlaneCollider : self.get_collision_normal_plane
+        }
+
+
+
+    def intersect_sphere(self, sphere:Abstract, collide:bool=False):
+        relativeToPlane = self.objectiveDistortion.get_3x3_inverse().apply(sphere.objectiveLocation.subtract(self.objectiveLocation)).get_contents()
+
+        if (abs(relativeToPlane[0][0]) < self.width / 2 and 
+                relativeToPlane[1][0] < sphere.radius and 
+                abs(relativeToPlane[2][0]) < self.length / 2):
+            
+            if collide and sphere.body.dynamic:
+                difference = Matrix([[0], 
+                                     [sphere.radius - relativeToPlane[1][0]],
+                                     [0]]) 
+                objectiveDifference = self.body.objectiveDistortion.apply(difference)
+                
+                sphere.body.translate_objective(objectiveDifference) # Now the sphere is no longer intersecting the plane
+
+            return True
+        
+        return False
+    
+    def intersect_plane(self, plane:Abstract, collide:bool=False):
+        return False
+    
+    def intersect(self, collider:Abstract, collide:bool=False):
+        print(f"Collider: {collider}")
+        return self.intersectionMethods[type(collider)](collider, collide)
+    
+
+
+    def get_collision_normal_sphere(self, sphere):
+        direction = self.objectiveDistortion.apply(Matrix([[0],
+                                                            [1],
+                                                            [0]]))
+        
+        return direction.set_magnitude(-1)
+        
+    def get_collision_normal_plane(self, plane):
+        return ORIGIN
+    
+    def get_collision_normal(self, collider):
+        return self.collisionNormalMethods[type(collider)](collider)
+
+
+
+class Body(Abstract):
+    def __init__(self,  
+                 mass:float, 
+                 bounciness:float=None,
+                 dynamic:bool=None, 
+                 location:Matrix=None,
+                 distortion:Matrix=None, 
+                 collider:Abstract=None,
+                 velocity:Matrix=None,
+                 tags:list[str]=None, 
+                 gravityDirection:Matrix=None):
+        super().__init__(location, distortion, tags)
+
+        self.mass = mass
+        self.bounciness = bounciness if bounciness else 0
+
+        self.dynamic = dynamic if dynamic is not None else True
+
+        self.oldObjectiveLocation = self.objectiveLocation # We store this so we can figure out how fast something's
+                                                                # moved even when it's been translated through code
+
+        if collider:
+            self.collider = collider
+            self.set_collider(collider)
+        else:
+            self.collider = None
+        
+        self.velocity = velocity if velocity else ORIGIN # A 3D collumb vector measured in units per second (ms^
+
+        self.forces = []
+
+        self.gravityDirection = gravityDirection if gravityDirection else GRAVDIRECTION
+
+    def set_collider(self, collider:Abstract):
+        self.collider = collider
+        self.add_child_relative(collider)
+
+    def add_force(self, force:Matrix):
+        self.forces.append(force)
+
+    def clear_forces(self):
+        self.forces.clear()
+
+    def apply_forces(self, frameDelta:float):
+        if self.dynamic:
+            resultantForce = ORIGIN
+
+            for force in self.forces:
+                resultantForce = resultantForce.add(force)
+
+            # Process acceleration using F = ma
+
+            # a = F /
+            #     m
+            if frameDelta > 0:
+                acceleration = resultantForce.multiply_contents(1 / self.mass)
+
+                # Process velocity using v = u + at
+                self.velocity = self.velocity.add(acceleration.multiply_contents(frameDelta))
+
+                # Translate according to velocity
+                self.translate_objective(self.velocity.multiply_contents(frameDelta))
+        else:
+            # If it's static, we can just say it's velocity is its change in position since the last frame over the frame delta
+            self.velocity = self.objectiveLocation.subtract(self.oldObjectiveLocation).multiply_contents(1 / frameDelta)
+            self.oldObjectiveLocation = self.objectiveLocation
+
+        self.clear_forces()
+
+
+
+def process_bodies(frameDelta):
+    print("\n--- STARTING PHYSICS PROCESS ---\n")
+    bodies = ROOT.get_substracts_of_type(Body)
+
+    bodiesToCheck = []
+
+    for body in bodies:
+        bodiesToCheck.append(body) # I had to do this otherwise they'd just be the same list
+
+    print(f"Processing bodies {bodies}")
+
+    if frameDelta > 0:
+        for i in range(len(bodies)):
+            body = bodiesToCheck.pop(0)
+            print(f"Taken {body.tags} from {bodiesToCheck}")
+                
+            if body.collider:
+
+                if body.dynamic:
+                    body.add_force(body.gravityDirection.set_magnitude(GRAVFIELDSTRENGTH))
+
+                    for otherBody in bodiesToCheck:
+                        print(f"comparing {body.tags} with {otherBody.tags}")
+                        
+                        if body.collider.intersect(otherBody.collider, True):
+                            print("Colliding!")
+                            
+                            # Here, we figure out the forces each body experiences.
+
+                            # Newton's law of restitution says momentum (mass * velocity) is conserved:
+
+                            # m1u1 + m2u2 = m1v1 + m2v2
+
+                            # We also know that the coefficient of restitution is the speed of separation
+                            # divided by the speed of approach:
+
+                            # e = v1 - v2 /
+                            #     u2 - u1
+
+                            # We can figure out e by finding the midpoint between both body's bounciness
+                            # levels, and we already have u1 and u2. From this, we can solve for v1 and v2
+
+                            # e(u2 - u1) = v1 - v2
+
+
+                            # - For v1:
+
+                            # v2 = v1 - e(u2 - u1)
+
+                            # m1u1 + m2u2 = m1v1 + m2(v1 - e(u2-u1))
+
+                            #             = m1v1 + m2v1 - m2 * e(u2-u1)
+
+                            #             = v1(m1 + m2) - m2 * e(u2-u1)
+
+                            # m1u1 + m2u2 + m2 * e(u2-u1) / 
+                            #          m1 + m2               = v1
+
+                            # (then just multiply by mass again to find momentum)
+
+
+                            # Now we know v1, we can just use that to find m2v2
+
+                            # m1u1 + m2u2 = m1v1 + m2v2
+
+                            # m1u1 + m2u2 - m1v1 = m2v2
+
+
+                            # If you're still alive after reading that algebra, then we've just found
+                            # the final momentums of both bodies! Because force is just the rate of 
+                            # change of momentum (impulse over time), we can find the force applied by
+                            # dividing the change in momentum by our frame delta.
+
+                            collisionNormal = body.collider.get_collision_normal(otherBody.collider)
+                            print(f"Collision normal: {collisionNormal.get_contents()}")
+                            restitutionVector = collisionNormal.multiply_contents((body.bounciness + otherBody.bounciness) / 2)
+
+                            print(f"e between {body.tags} and {otherBody.tags} is {restitutionVector.get_contents()}")
+                            
+                            bodyMomentum = body.velocity.multiply_contents(body.mass)
+                            otherMomentum = otherBody.velocity.multiply_contents(otherBody.mass)
+
+                            speedOfApproach = otherBody.velocity.subtract(body.velocity)
+
+                            if otherBody.dynamic:
+                                print("Resolving both momentums as both are dynamic")
+
+                                totalMass = body.mass + otherBody.mass
+
+                                # Solve for the first body
+                                newBodyMomentum = bodyMomentum.add(
+                                                otherMomentum).add(
+                                                speedOfApproach.multiply(restitutionVector).multiply_contents(
+                                                otherBody.mass)).multiply_contents(
+                                                1 / totalMass).multiply_contents(body.mass)
+                            
+                                bodyImpulse = newBodyMomentum.subtract(bodyMomentum)
+                                print(f"Impulse is {bodyImpulse.get_contents()}")
+
+                                body.add_force(bodyImpulse.multiply_contents(1 / frameDelta))
+
+                                # Solve for the other body
+                                newOtherMomentum = bodyMomentum.add(otherMomentum).subtract(newBodyMomentum)
+
+                                otherImpulse = newOtherMomentum.subtract(otherMomentum)
+                                print(f"Impulse is {otherImpulse.get_contents()}")
+
+                                otherBody.add_force(otherImpulse.multiply_contents(1 / frameDelta))
+                            else:
+                                # Here, we already know the other body's velocity, which simplifiys our calculations a bit.
+
+                                # m1u1 + m2u2 = m1v1 + m2v2
+
+                                # e = v1 - v2/ 
+                                #     u2 - u1
+
+                                # We know e, u1, u2 and v2, so:
+
+                                # e(u2 - u1) + v2 = v1
+
+                                # m1v1 = m1(e(u2 - u1) + v2)
+
+                                newBodyMomentum = restitutionVector.multiply(speedOfApproach).add(otherBody.velocity).multiply_contents(body.mass)
+
+                                bodyImpulse = newBodyMomentum.subtract(bodyMomentum)
+                                print(f"Impulse is {bodyImpulse.get_contents()}")
+
+                                body.add_force(bodyImpulse.multiply_contents(1 / frameDelta))
+                            
+                else:
+                    for otherBody in bodies:
+                        if body.collider.intersect(otherBody.collider, True):
+                            print("Colliding!")
+                            # We have to do these again becasue of my fuckahh descision tree
+                            collisionNormal = body.collider.get_collision_normal(otherBody.collider)
+                            print(f"Collision normal: {collisionNormal.get_contents()}")
+                            restitutionVector = collisionNormal.multiply_contents((body.bounciness + otherBody.bounciness) / 2)
+
+                            print(f"e between {body.tags} and {otherBody.tags} is {restitutionVector.get_contents()}")
+                            
+                            bodyMomentum = body.velocity.multiply_contents(body.mass)
+                            otherMomentum = otherBody.velocity.multiply_contents(otherBody.mass)
+
+                            speedOfApproach = otherBody.velocity.subtract(body.velocity)
+
+                            if otherBody.dynamic:
+                                print(f"Resolving only {otherBody.tags}'s momentum as {body.tags} is static")
+                                # Here we know otherBody is static, so we only have to do this whole 
+                                newOtherMomentum = restitutionVector.multiply(speedOfApproach).add(body.velocity).multiply_contents(otherBody.mass)
+
+                                otherImpulse = newOtherMomentum.subtract(otherMomentum)
+                                print(f"Impulse is {otherImpulse.get_contents()}")
+
+                                otherBody.add_force(otherImpulse.multiply_contents(1 / frameDelta))
+            else:
+                print(f"{body.tags} doesn't have a collider!")
+                    
+        for body in bodies:
+            body.apply_forces(frameDelta)
