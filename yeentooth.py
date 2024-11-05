@@ -41,6 +41,22 @@ class Matrix:
     def set_contents(self, contents: list[list[float]]):
         self.contents = contents
         self.order = (len(contents), len(contents[0])) # Same as in __init__()
+
+    def get_row(self, row:int):
+        result = [[]]
+
+        for i in range(self.order[0]):
+            result[0].append(self.contents[row][i])
+
+        return Matrix(result)
+
+    def get_collumb(self, collumb:int):
+        result = []
+
+        for i in range(self.order[0]):
+            result.append([self.contents[i][collumb]])
+
+        return Matrix(result)
          
     def multiply_contents(self, coefficient: float): # If you need to divide a matrix, you can just multiply 
                                                      # it by the reciprocal of your coefficient.        
@@ -271,6 +287,29 @@ class Matrix:
         # Thank god it's over! I hope your enjoyed our munity through 3x3 matrix inversion.
         # I'm probably not going to mansplain as much in the rest of my code but for other complex
         # functions I'll get my dreaded comments out again.
+
+    def get_dot_product(self, dot):
+        selfContents = self.get_contents()
+        dotContents = dot.get_contents()
+        #print(f"Getting dot product between {selfContents} and {dotContents}")
+
+        dotProduct = 0
+
+        for i in range(len(self.get_contents())):
+            #print(f"Adding {selfContents[i][0] * dotContents[i][0]} to {dotProduct}")
+            dotProduct += selfContents[i][0] * dotContents[i][0]
+
+        #print(dotProduct)
+        
+        return dotProduct
+    
+    def get_cross_product(self, cross):
+        selfContents = self.get_contents()
+        crossContents = cross.get_contents()
+        
+        return Matrix([[selfContents[1][0] * crossContents[2][0] - selfContents[2][0] * crossContents[1][0]],
+                       [selfContents[2][0] * crossContents[0][0] - selfContents[0][0] * crossContents[2][0]],
+                       [selfContents[0][0] * crossContents[1][0] - selfContents[1][0] * crossContents[0][0]],])
         
     def add(self, matrixToAddIdk):
         if self.order != matrixToAddIdk.get_order():
@@ -771,6 +810,74 @@ class Texture(): # This is here so I don't have to make a copy of a
 
 
 
+# These are some processing functions which will help us out at the rendering step
+
+def average_colours(colours:list[tuple]):
+    average = [0, 0, 0]
+
+    length = len(colours)
+
+    for colour in colours:
+        for i in range(3):
+            average[i] += colour[i]
+
+    for component in average:
+        component /= length
+
+    return (average[0], average[1], average[2])
+
+
+
+# Blend modes
+
+def multiply_colours(colours:list[tuple]):
+    result = [1, 1, 1]
+
+    for colour in colours:
+        for i in range(3):
+            print(f"Channel {i} is {result[i]} * {colour[i] / 255}")
+            result[i] *= colour[i] / 255
+
+    return (result[0] * 255, result[1] * 255, result[2] * 255)
+
+def screen_colours(colours:list[tuple]):
+    result = [1, 1, 1]
+
+    for colour in colours:
+        for i in range(3):
+            print(f"multiplying {result[i]} by {(1 - (colour[i] / 255))}")
+            result[i] *= (1 - (colour[i] / 255))
+
+    return ((1 - result[0]) * 255, (1 - result[1]) * 255, (1 - result[2]) * 255)
+
+def soft_light_colours(colour1, colour2):
+    result = []
+
+    for i in range(3):
+        a = colour1[i] / 255
+        b = colour2[i] / 255
+
+        result.append(((1 - (2 * b)) * (a ** 2) + (2 * a * b)) * 255) 
+        # This is the Pegtop soft light formula.
+
+    return (result[0], result[1], result[2])
+
+
+
+def interpolate_colour(colour1:tuple, colour2:tuple, t:float):
+    return (math.floor(colour1[0] + (colour2[0] - colour1[0]) * abs(t)),
+            math.floor(colour1[1] + (colour2[1] - colour1[1]) * abs(t)),
+            math.floor(colour1[2] + (colour2[2] - colour1[2]) * abs(t)))
+
+def interpolate_value(float1:float, float2:float, t:float):
+    return float1 + (float2 - float1) * abs(t)
+
+def interpolate_coordinate(coordinate1:tuple, coordinate2:tuple, t:float):
+    return (math.floor(coordinate1[0] + (coordinate2[0] - coordinate1[0]) * abs(t)),
+            math.floor(coordinate1[1] + (coordinate2[1] - coordinate1[1]) * abs(t)))
+    
+
+
 class Image(): # This is like a shitty fake version of pygame.Surface
     def __init__(self, resolution:tuple, pixelSize:tuple, colorspace:bool):
         self.resolution = resolution
@@ -804,20 +911,6 @@ class Image(): # This is like a shitty fake version of pygame.Surface
             for j in range(self.resolution[0]):
                 self.contents[i][j] = value
 
-    def interpolate_colour(self, colour1:tuple, colour2:tuple, t:float):
-        return (math.floor(colour1[0] + (colour2[0] - colour1[0]) * abs(t)),
-                math.floor(colour1[1] + (colour2[1] - colour1[1]) * abs(t)),
-                math.floor(colour1[2] + (colour2[2] - colour1[2]) * abs(t)))
-    
-    def interpolate_value(self, float1:float, float2:float, t:float):
-        return float1 + (float2 - float1) * abs(t)
-    
-    def interpolate_coordinate(self, coordinate1:tuple, coordinate2:tuple, t:float):
-        return (math.floor(coordinate1[0] + (coordinate2[0] - coordinate1[0]) * abs(t)),
-                math.floor(coordinate1[1] + (coordinate2[1] - coordinate1[1]) * abs(t)))
-    
-    
-
     def draw_horizontal_line(self, 
                              x1:int, 
                              x2:int, 
@@ -838,15 +931,15 @@ class Image(): # This is like a shitty fake version of pygame.Surface
             for i in range(x1, x2, 1 if x1 < x2 else -1):
                 if 0 <= i < self.resolution[0]:
                     interpolationAmount = (i - x1) / lineLength
-                    depth = self.interpolate_value(depth1, depth2, interpolationAmount)
+                    depth = interpolate_value(depth1, depth2, interpolationAmount)
                     
                     if depth <= depthBuffer.contents[y][i]:
                         if colour2:
-                            pixelColour = self.interpolate_colour(colour1, colour2, interpolationAmount)
+                            pixelColour = interpolate_colour(colour1, colour2, interpolationAmount)
                             self.contents[y][i] = pixelColour
                             depthBuffer.contents[y][i] = depth
                         elif texture:
-                            self.contents[y][i] = texture.get_colour_at(self.interpolate_coordinate(uv1, uv2, interpolationAmount))
+                            self.contents[y][i] = texture.get_colour_at(interpolate_coordinate(uv1, uv2, interpolationAmount))
                             depthBuffer.contents[y][i] = depth
                         else:
                             self.contents[y][i] = colour1
@@ -882,19 +975,19 @@ class Image(): # This is like a shitty fake version of pygame.Surface
             left = math.floor(bottomLeft[0] - (leftToPoint * amountDone))
             right = math.floor(bottomRight[0] - (rightToPoint * amountDone))
             
-            leftDepth = self.interpolate_value(depth1, depth3, amountDone)
-            rightDepth = self.interpolate_value(depth2, depth3, amountDone)
+            leftDepth = interpolate_value(depth1, depth3, amountDone)
+            rightDepth = interpolate_value(depth2, depth3, amountDone)
 
             if colour2:
                 self.draw_horizontal_line(left, right, y, depthBuffer, leftDepth, rightDepth, 
-                                        self.interpolate_colour(colour1, colour3, amountDone), 
-                                        self.interpolate_colour(colour2, colour3, amountDone))
+                                        interpolate_colour(colour1, colour3, amountDone), 
+                                        interpolate_colour(colour2, colour3, amountDone))
                 
             elif texture:
                 self.draw_horizontal_line(left, right, y, depthBuffer, leftDepth, rightDepth,
                                           texture=texture,
-                                          uv1=self.interpolate_coordinate(uv1, uv3, amountDone),
-                                          uv2=self.interpolate_coordinate(uv2, uv3, amountDone))
+                                          uv1=interpolate_coordinate(uv1, uv3, amountDone),
+                                          uv2=interpolate_coordinate(uv2, uv3, amountDone))
             else:
                 self.draw_horizontal_line(left, right, y, depthBuffer, leftDepth, rightDepth, colour1)
                 
@@ -918,6 +1011,8 @@ class Image(): # This is like a shitty fake version of pygame.Surface
         uv1 = kwargs.get("uv1", None)
         uv2 = kwargs.get("uv2", None)
         uv3 = kwargs.get("uv3", None)
+
+        lightCast = kwargs.get("lightCast", None)
 
         # Find the middle vertex
         heights = [vertex1[1], vertex2[1], vertex3[1]]
@@ -965,12 +1060,20 @@ class Image(): # This is like a shitty fake version of pygame.Surface
             sliceAmount = (vertices[1][1] - vertices[2][1]) / triangleHeight
         else:
             sliceAmount = 0
+
+        if lightCast: # This is very inefficient for textured tris, remove later
+            for i in range(3):
+
+                if colours[i]:
+                    print(f"Before: {colours[i]}")
+                    colours[i] = screen_colours([colours[i], lightCast])
+                    print(f"After: {colours[i]}")
         
         sliceCoordinate = (math.floor(vertices[2][0] + (topToBottomHorizontal * (sliceAmount))), vertices[1][1])
-        sliceDepth = self.interpolate_value(depths[0], depths[2], 1 - sliceAmount)
+        sliceDepth = interpolate_value(depths[0], depths[2], 1 - sliceAmount)
         
         if colour2:
-            sliceColour = self.interpolate_colour(colours[0], colours[2], 1 - sliceAmount)
+            sliceColour = interpolate_colour(colours[0], colours[2], 1 - sliceAmount)
 
             self.draw_flat_based_triangle(vertices[1], sliceCoordinate, vertices[2], 
                                           depthBuffer, depths[1], sliceDepth, depths[2],
@@ -980,7 +1083,7 @@ class Image(): # This is like a shitty fake version of pygame.Surface
                                           colours[1], sliceColour, colours[0])
             
         elif texture:
-            sliceUV = self.interpolate_coordinate(uvs[0], uvs[2], 1 - sliceAmount)
+            sliceUV = interpolate_coordinate(uvs[0], uvs[2], 1 - sliceAmount)
 
             self.draw_flat_based_triangle(vertices[1], sliceCoordinate, vertices[2], 
                                           depthBuffer, depths[1], sliceDepth, depths[2],
@@ -1034,10 +1137,16 @@ DEPTHBUFFER = Image((128, 96), (5, 5), False)
 
 
 
+AMBIENTLIGHT = (0, 0, 0) # This is the colour absolute shadow is interpolated to 
+
+
+
 class Tri(Abstract): # This should be a child to an abstract which will serve as a wrapper for a group of polys.
     def __init__(self, 
                  vertices:list[list[float]], 
-                 albedo:tuple, lit:bool, tags:list[str]=None):   
+                 albedo:tuple, 
+                 lit:bool, 
+                 tags:list[str]=None):   
         super().__init__(ORIGIN, I3, ["Tri"] + tags if tags else [])
         
         # Vertices should be an array of 3 arrays.
@@ -1066,6 +1175,72 @@ class Tri(Abstract): # This should be a child to an abstract which will serve as
     
     def set_albedo(self, albedo:tuple):
         self.albedo = albedo
+
+    def get_normal(self):
+        vertex1 = self.vertices.get_collumb(0)
+        vertex2 = self.vertices.get_collumb(1)
+        vertex3 = self.vertices.get_collumb(2)
+
+        edge1 = vertex2.subtract(vertex1)
+        edge2 = vertex3.subtract(vertex1)
+
+        return edge1.get_cross_product(edge2).set_magnitude(1)
+    
+    def get_center(self):
+        center = [[0],
+                  [0],
+                  [0]]
+        
+        print(f"Tags: {self.get_tags()}")
+        
+        for i in range(3):
+            for vertex in self.vertices.get_row(i).get_contents():
+                center[i][0] += vertex[i]
+
+            center[i][0] /= 3
+
+        print(f"Relative center: {center}")
+
+        return self.objectiveDistortion.apply(Matrix(center)).add(self.objectiveLocation)
+    
+    def get_light_cast(self, lights):
+        if lights:
+            print("\n\nCALCULATING TRIANGLE LIGHTING")
+
+            center = self.get_center()
+            print(f"Center:{center.get_contents()}")
+
+            casts = []
+
+            for light in lights:
+                direction = light.objectiveLocation.subtract(center)
+                distance = direction.get_magnitude()
+                direction = direction.set_magnitude(1)
+
+                print(f"distance: {distance}")
+
+                if distance > 0:
+                    cast = interpolate_colour(AMBIENTLIGHT, light.colour, clamp(1 / ((distance / light.brightness) ** 2), 0, 1))
+                    
+                    print(f"distance / brightness: {distance / light.brightness}")
+                    print(f"^ squared: {(distance / light.brightness) ** 2}")
+                    print(f"brightness: {1 / ((distance / light.brightness) ** 2)}")
+                    print(f"\ncurrent cast: {cast}")
+                else:
+                    cast = light.colour
+
+                angleAmount = self.get_normal().get_dot_product(direction)
+                print(f"Angle amount: {angleAmount}")
+
+                cast = interpolate_colour(AMBIENTLIGHT, cast, (angleAmount + 1) / 2)
+                print(f"new cast: {cast}")
+
+                casts.append(cast)
+
+            print(f"Light cast on tri is {average_colours(casts)}")
+            return average_colours(casts)
+        
+        return (0, 0, 0)
         
 
 
@@ -1408,6 +1583,20 @@ class Wavefront(Mesh):
                         self.add_child_relative(Tri(v, self.colour, self.lit, ["MeshTri"]))
 
 
+
+class Light(Abstract):
+    def __init__(self, 
+                 brightness:float, 
+                 colour:tuple=None, 
+                 location:Matrix=None, 
+                 distortion:Matrix=None, 
+                 tags:list[str]=None):
+        super().__init__(location, distortion, tags)
+
+        self.brightness = brightness if brightness else 1
+        self.colour = colour if colour else {255, 255, 255}
+        
+
         
 class Camera(Abstract):
     def __init__(self, location, distortion, fieldOfView:float):
@@ -1428,7 +1617,7 @@ class Camera(Abstract):
 
         # Rearrange to make perspectiveConstant = tan(theta) / half the resolution
         
-    def project_tri(self, cameraLocationMatrix:Matrix, inversion:Matrix, tri, depthBuffer, lights:list[Abstract]=None):
+    def project_tri(self, cameraLocationMatrix:Matrix, inversion:Matrix, tri:Tri, depthBuffer:Image, lights:list[Light]=[]):
         triLocation = tri.objectiveLocation.get_contents()
 
         triLocationMatrix = Matrix([[triLocation[0][0], triLocation[0][0], triLocation[0][0]],  # This is the tri's location
@@ -1453,12 +1642,19 @@ class Camera(Abstract):
             vertex3 = (math.floor(triCameraVertices[0][2] / (triCameraVertices[2][2] * self.perspectiveConstant) + displaySizeX), 
                        math.floor(-triCameraVertices[1][2] / (triCameraVertices[2][2] * self.perspectiveConstant) + displaySizeY))
 
+
+
             if ((0 <= vertex1[0] <= displaySizeX * 2 - 1 and # This is the worst way i could possibly do this.
                 0 <= vertex1[1] <= displaySizeY * 2 - 1) or   # Too bad! It works so it's staying
                 (0 <= vertex2[0] <= displaySizeX * 2 - 1 and
                 0 <= vertex2[1] <= displaySizeY * 2 - 1) or 
                 (0 <= vertex3[0] <= displaySizeX * 2 - 1 and
                 0 <= vertex3[1] <= displaySizeY * 2 - 1)):
+
+                if tri.lit:
+                    lightCast = tri.get_light_cast(lights)
+                else:
+                    lightCast = (127, 127, 127)
                 
                 if type(tri) == GradientTri:
                     DISPLAY.draw_triangle(vertex1, vertex2, vertex3, 
@@ -1474,7 +1670,7 @@ class Camera(Abstract):
                 else:
                     DISPLAY.draw_triangle(vertex1, vertex2, vertex3, 
                                           depthBuffer, triCameraVertices[2][0], triCameraVertices[2][1], triCameraVertices[2][2],
-                                          tri.albedo)
+                                          lightCast, lightCast=lightCast)
                     
             #pygame.draw.polygon(window, tri.albedo, screenSpaceCoordinates)
         
@@ -1483,6 +1679,8 @@ class Camera(Abstract):
     def rasterize(self):
         tris = ROOT.get_substracts_of_type(Tri) + ROOT.get_substracts_of_type(GradientTri) + ROOT.get_substracts_of_type(TextureTri)
         
+        lights = ROOT.get_substracts_of_type(Light)
+
         inversion = self.objectiveDistortion.get_3x3_inverse()
         location = self.objectiveLocation.get_contents()
         locationMatrix = Matrix([[location[0][0], location[0][0], location[0][0]],
@@ -1493,7 +1691,7 @@ class Camera(Abstract):
         DEPTHBUFFER.fill(1024.0)
         
         for tri in tris:
-            self.project_tri(locationMatrix, inversion, tri, DEPTHBUFFER)
+            self.project_tri(locationMatrix, inversion, tri, DEPTHBUFFER, lights)
         
         DISPLAY.render_image(window, (0, 0))
 
@@ -1711,7 +1909,7 @@ class SphereCollider(Abstract):
 
     
     def get_collision_normal_sphere(self, sphere):
-        direction = sphere.objectiveLocation.subtract(sphere.objectiveLocation)
+        direction = self.objectiveLocation.subtract(sphere.objectiveLocation)
 
         try:
             return direction.set_magnitude(1) # This just makes its magnitude 1
@@ -1778,7 +1976,7 @@ class PlaneCollider(Abstract):
         return False
     
     def intersect(self, collider:Abstract, collide:bool=False):
-        print(f"Collider: {collider}")
+        #print(f"Collider: {collider}")
         return self.intersectionMethods[type(collider)](collider, collide)
     
 
@@ -1802,6 +2000,7 @@ class Body(Abstract):
     def __init__(self,  
                  mass:float, 
                  bounciness:float=None,
+                 roughness:float=None,
                  dynamic:bool=None, 
                  location:Matrix=None,
                  distortion:Matrix=None, 
@@ -1812,7 +2011,8 @@ class Body(Abstract):
         super().__init__(location, distortion, tags)
 
         self.mass = mass
-        self.bounciness = bounciness if bounciness else 0
+        self.bounciness = bounciness if bounciness is not None else 0
+        self.roughness = roughness if roughness is not None else 10
 
         self.dynamic = dynamic if dynamic is not None else True
 
@@ -1843,6 +2043,8 @@ class Body(Abstract):
 
     def apply_forces(self, frameDelta:float):
         if self.dynamic:
+            #print(f"Applying forces to {self.tags}")
+            #print(f"{self.tags}'s velocity is {self.velocity}")
             resultantForce = ORIGIN
 
             for force in self.forces:
@@ -1861,7 +2063,7 @@ class Body(Abstract):
                 # Translate according to velocity
                 self.translate_objective(self.velocity.multiply_contents(frameDelta))
         else:
-            # If it's static, we can just say it's velocity is its change in position since the last frame over the frame delta
+            # If it's kinematic, we can just say it's velocity is its change in position since the last frame over the frame delta
             self.velocity = self.objectiveLocation.subtract(self.oldObjectiveLocation).multiply_contents(1 / frameDelta)
             self.oldObjectiveLocation = self.objectiveLocation
 
@@ -1870,7 +2072,7 @@ class Body(Abstract):
 
 
 def process_bodies(frameDelta):
-    print("\n--- STARTING PHYSICS PROCESS ---\n")
+    #print("\n--- STARTING PHYSICS PROCESS ---\n")
     bodies = ROOT.get_substracts_of_type(Body)
 
     bodiesToCheck = []
@@ -1878,23 +2080,23 @@ def process_bodies(frameDelta):
     for body in bodies:
         bodiesToCheck.append(body) # I had to do this otherwise they'd just be the same list
 
-    print(f"Processing bodies {bodies}")
+    #print(f"Processing bodies {bodies}")
 
     if frameDelta > 0:
         for i in range(len(bodies)):
             body = bodiesToCheck.pop(0)
-            print(f"Taken {body.tags} from {bodiesToCheck}")
+            #print(f"Taken {body.tags} from {bodiesToCheck}")
                 
             if body.collider:
 
                 if body.dynamic:
-                    body.add_force(body.gravityDirection.set_magnitude(GRAVFIELDSTRENGTH))
+                    body.add_force(body.gravityDirection.set_magnitude(GRAVFIELDSTRENGTH * body.mass))
 
                     for otherBody in bodiesToCheck:
-                        print(f"comparing {body.tags} with {otherBody.tags}")
+                        #print(f"comparing {body.tags} with {otherBody.tags}")
                         
                         if body.collider.intersect(otherBody.collider, True):
-                            print("Colliding!")
+                            #print("Colliding!")
                             
                             # Here, we figure out the forces each body experiences.
 
@@ -1942,41 +2144,39 @@ def process_bodies(frameDelta):
                             # change of momentum (impulse over time), we can find the force applied by
                             # dividing the change in momentum by our frame delta.
 
+                            #print(f"Calculating collision between {body.tags} and {otherBody.tags}")
+
                             collisionNormal = body.collider.get_collision_normal(otherBody.collider)
-                            print(f"Collision normal: {collisionNormal.get_contents()}")
-                            restitutionVector = collisionNormal.multiply_contents((body.bounciness + otherBody.bounciness) / 2)
+                            #print(f"Collision normal is {collisionNormal.get_contents()}")
 
-                            print(f"e between {body.tags} and {otherBody.tags} is {restitutionVector.get_contents()}")
-                            
-                            bodyMomentum = body.velocity.multiply_contents(body.mass)
-                            otherMomentum = otherBody.velocity.multiply_contents(otherBody.mass)
+                            e = (body.bounciness + otherBody.bounciness) / 2
 
-                            speedOfApproach = otherBody.velocity.subtract(body.velocity)
+                            m1 = body.mass
+
+                            m2 = otherBody.mass
+
+                            u1 = body.velocity.get_dot_product(collisionNormal)
+                            #print(f"U1 parallel to normal is {u1}")
+
+                            u2 = otherBody.velocity.get_dot_product(collisionNormal)
+                            #print(f"U2 parallel to normal is {u2}")
 
                             if otherBody.dynamic:
-                                print("Resolving both momentums as both are dynamic")
+                                # Calculate impulse on body
+                                v1 = ((m1 * u1) + (m2 * u2) + (m2 * e * (u2 - u1)) /
+                                                        m1 + m2)
 
-                                totalMass = body.mass + otherBody.mass
-
-                                # Solve for the first body
-                                newBodyMomentum = bodyMomentum.add(
-                                                otherMomentum).add(
-                                                speedOfApproach.multiply(restitutionVector).multiply_contents(
-                                                otherBody.mass)).multiply_contents(
-                                                1 / totalMass).multiply_contents(body.mass)
-                            
-                                bodyImpulse = newBodyMomentum.subtract(bodyMomentum)
-                                print(f"Impulse is {bodyImpulse.get_contents()}")
+                                bodyImpulse = collisionNormal.multiply_contents((m1 * v1) - (m1 * u1))
 
                                 body.add_force(bodyImpulse.multiply_contents(1 / frameDelta))
 
-                                # Solve for the other body
-                                newOtherMomentum = bodyMomentum.add(otherMomentum).subtract(newBodyMomentum)
+                                # Calculate impulse on the other body
+                                otherMomentum = (m1 * u1) + (m2 * u2) - (m1 * v1)
 
-                                otherImpulse = newOtherMomentum.subtract(otherMomentum)
-                                print(f"Impulse is {otherImpulse.get_contents()}")
+                                otherImpulse = collisionNormal.multiply_contents(otherMomentum - (m2 * u2))
 
                                 otherBody.add_force(otherImpulse.multiply_contents(1 / frameDelta))
+
                             else:
                                 # Here, we already know the other body's velocity, which simplifiys our calculations a bit.
 
@@ -1991,38 +2191,104 @@ def process_bodies(frameDelta):
 
                                 # m1v1 = m1(e(u2 - u1) + v2)
 
-                                newBodyMomentum = restitutionVector.multiply(speedOfApproach).add(otherBody.velocity).multiply_contents(body.mass)
+                                v2 = otherBody.velocity.get_dot_product(collisionNormal)
 
-                                bodyImpulse = newBodyMomentum.subtract(bodyMomentum)
-                                print(f"Impulse is {bodyImpulse.get_contents()}")
+                                bodyMomentum = m1 * (e * (u2 - u1) + v2)
+
+                                bodyImpulse = collisionNormal.multiply_contents(bodyMomentum - (m1 * u1))
 
                                 body.add_force(bodyImpulse.multiply_contents(1 / frameDelta))
+
+                            # Now we've sorted out exchange of momentum, we need to apply friction.
+
+                            # We just need to find the component not parallel to the surface, and apply a force 
+                            # opposing it.
+
+                            # The magnitude of this force is whichever's smaller:
+
+                            # The force pushing the particle, or the object's limiting friction.
+
+                            limitingFriction = (body.roughness + otherBody.roughness) / 2
+                            
+                            # This is the direction opposing the body's movement parallel to the collision surface
+                            bodyOpposingForce = body.velocity.subtract(collisionNormal.multiply_contents(u1)).set_magnitude(1).multiply_contents(-limitingFriction)
+
+                            body.add_force(bodyOpposingForce)
+                            
+                            otherBodyOpposingForce = otherBody.velocity.subtract(collisionNormal.multiply_contents(u2)).set_magnitude(1).multiply_contents(-limitingFriction)
+
+                            otherBody.add_force(otherBodyOpposingForce)
+
+
                             
                 else:
                     for otherBody in bodies:
                         if body.collider.intersect(otherBody.collider, True):
-                            print("Colliding!")
-                            # We have to do these again becasue of my fuckahh descision tree
+
+                            #print(f"Calculating collision between {body.tags} and {otherBody.tags}")
+
                             collisionNormal = body.collider.get_collision_normal(otherBody.collider)
-                            print(f"Collision normal: {collisionNormal.get_contents()}")
-                            restitutionVector = collisionNormal.multiply_contents((body.bounciness + otherBody.bounciness) / 2)
+                            #print(f"Collision normal is {collisionNormal.get_contents()}")
 
-                            print(f"e between {body.tags} and {otherBody.tags} is {restitutionVector.get_contents()}")
-                            
-                            bodyMomentum = body.velocity.multiply_contents(body.mass)
-                            otherMomentum = otherBody.velocity.multiply_contents(otherBody.mass)
+                            e = (body.bounciness + otherBody.bounciness) / 2
 
-                            speedOfApproach = otherBody.velocity.subtract(body.velocity)
+                            m1 = body.mass
+
+                            m2 = otherBody.mass
+
+                            u1 = body.velocity.get_dot_product(collisionNormal)
+                            #print(f"U1 parallel to normal is {u1}")
+
+                            u2 = otherBody.velocity.get_dot_product(collisionNormal)
+                            #print(f"U2 parallel to normal is {u2}")
 
                             if otherBody.dynamic:
-                                print(f"Resolving only {otherBody.tags}'s momentum as {body.tags} is static")
-                                # Here we know otherBody is static, so we only have to do this whole 
-                                newOtherMomentum = restitutionVector.multiply(speedOfApproach).add(body.velocity).multiply_contents(otherBody.mass)
+                                # This is almost exactly the same as above, just rearranged a bit differently
 
-                                otherImpulse = newOtherMomentum.subtract(otherMomentum)
-                                print(f"Impulse is {otherImpulse.get_contents()}")
+                                # m1u1 + m2u2 = m1v1 + m2v2
+
+                                # e = v1 - v2/ 
+                                #     u2 - u1
+
+                                # We know e, u1, u2 and v2, so:
+
+                                # v1 - e(u2 - u1) = v2
+
+                                # m2v2 = m2(v1 - e(u2 - u1))
+                                
+                                v1 = body.velocity.get_dot_product(collisionNormal)
+
+                                otherMomentum = m2 * (v1 - e * (u2 - u1))
+
+                                otherImpulse = collisionNormal.multiply_contents(otherMomentum - (m2 * u2))
 
                                 otherBody.add_force(otherImpulse.multiply_contents(1 / frameDelta))
+
+                        
+                            # Now we've sorted out exchange of momentum, we need to apply friction.
+
+                            # We just need to find the component not parallel to the surface, and apply a force 
+                            # opposing it.
+
+                            # The magnitude of this force is whichever's smaller:
+
+                            # The force pushing the particle, or the object's limiting friction.
+
+                            friction = (body.roughness + otherBody.roughness) / 2
+                            #print(f"Limiting friction: {friction}")
+                            
+                            # This is the direction opposing the body's movement parallel to the collision surface
+                            bodyOpposingForce = body.velocity.subtract(collisionNormal.multiply_contents(u1)).set_magnitude(1).multiply_contents(-friction)
+
+                            #print(f"{body.tags} recieving opposing force {bodyOpposingForce.get_contents()}")
+
+                            body.add_force(bodyOpposingForce)
+                            
+                            otherBodyOpposingForce = otherBody.velocity.subtract(collisionNormal.multiply_contents(u2)).set_magnitude(1).multiply_contents(-friction)
+                            #print(f"{otherBody.tags} recieving opposing force {otherBodyOpposingForce.get_contents()}")
+
+                            otherBody.add_force(otherBodyOpposingForce)
+                
             else:
                 print(f"{body.tags} doesn't have a collider!")
                     
