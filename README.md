@@ -24,6 +24,6 @@ On top of that, you have the option to use real-time surface normal lighting for
 
 There's also stereo sound effects! 🤯🤯🤯 #revolutionary
 
-It's pretty janky but there's also a basic particle physics engine you can use for collisions; there's no angular velocity or anything but it should work well enough for most things. Big thanks to @something12356 for help with the restitution mechanics!
+It's pretty janky but I added a basic physics engine you can use for collisions; there's no angular velocity or anything but it should work well enough for most things. Big thanks to @something12356 for help with the restitution mechanics!
 
 But yeah, if you want to then have a play around with it! You can run and look through the Sample Scene to see how everything works, and use it as a basis for your own game. If you make anything using this, don't hesitate to show me! I'd love to see what you guys make 👍
