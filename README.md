@@ -8,7 +8,7 @@ this is pretty outdated 😭 I'll get a new video with the features i've added s
 
 ## **Note:**
 
-For some reason this runs *incredibly* slow on Windows. Literally it runs 20 times faster on my 11 year old MacBook Pro with Ubuntu than it does on my 2021 windows pc ☠️ Tbf it runs horribly on anything that doesn't border on precognition when it comes to single core cpu performance, but Windows seems to be a challenge for it regardless of the device.
+For some reason this runs *incredibly* slow on Windows. Literally it runs 20 times faster on my 11 year old MacBook Pro with Ubuntu than it does on my 2021 windows pc ☠️ Tbf it runs horribly on anything that doesn't border on precognition when it comes to single core cpu performance, but Windows seems to be a challenge for it regardless of the device you're running it on.
 
 ## **Info:**
 
