@@ -13,9 +13,8 @@ ROOT.add_child_relative(origin)
 
 # Abstracts have to be underneath ROOT somewhere in the heirachy to get processed.
 
-# Otherwise, it ends up in its own
-# little pocket universe where nothing gets recognised by the engine and it sits around
-# taking up memory. Wish I could do that ngl
+# Otherwise, it ends up in its own little pocket universe where nothing gets recognised by 
+# the engine and it just sits around taking up memory. Wish I could do that irl ngl
 
 # That's why we have to use add_child_relative() whenever we make a new abstract to put it
 # in the heirachy.
