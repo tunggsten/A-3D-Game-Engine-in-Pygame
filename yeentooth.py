@@ -840,7 +840,6 @@ def multiply_colours(colours:list[tuple]):
 
     for colour in colours:
         for i in range(3):
-            print(f"Channel {i} is {result[i]} * {colour[i] / 255}")
             result[i] *= colour[i] / 255
 
     return (result[0] * 255, result[1] * 255, result[2] * 255)
@@ -863,7 +862,6 @@ def screen_colours(colours:list[tuple]):
 
     for colour in colours:
         for i in range(3):
-            print(f"multiplying {result[i]} by {(1 - (colour[i] / 255))}")
             result[i] *= (1 - (colour[i] / 255))
 
     return ((1 - result[0]) * 255, (1 - result[1]) * 255, (1 - result[2]) * 255)
@@ -1313,7 +1311,6 @@ class Mesh(Abstract):
     
     def change_tris_to_gradient(self, colour1, colour2, colour3):
         for tri in self.get_substracts_of_type(Tri) + self.get_substracts_of_type(TextureTri):
-            print(tri)
             self.add_child_relative(GradientTri(tri.vertices.get_transpose().get_contents(), colour1, colour2, colour3, tri.lit, tri.tags))
             tri.kill_self_and_substracts()
             del tri
@@ -1469,8 +1466,6 @@ class Cube(Mesh):
         textureSize = texture.surface.get_size()
 
         tris = self.get_children_with_tag("CubeTri")
-        print(self.get_children())
-        print(tris)
 
         for i in range(6):
             self.add_child_relative(TextureTri(tris[i * 2].get_vertices().get_transpose().get_contents(),
@@ -1554,11 +1549,9 @@ class Wavefront(Mesh):
 
                     for i in range(1, 4):
                         indexes = values[i].split("/")
-                        print(f"Indexes: {indexes}")
                         v.append(vertices[int(indexes[0]) - 1])
 
                         try: # Sometimes you won't have UVs so we have to account for it
-                            print(f"Appending UV: {uvs[int(indexes[1]) - 1]}")
 
                             # This is carcinogenic but we have to do this because
                             # wavefront files store uvs with coordinates between
@@ -1883,7 +1876,6 @@ class SphereCollider(Abstract):
         self.radius = radius
 
         if body:
-            print(f"Setting {self.tags} as a collider")
             self.body = body
             body.set_collider(self)
         else:
