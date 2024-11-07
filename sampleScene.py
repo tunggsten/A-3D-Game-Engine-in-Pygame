@@ -122,17 +122,17 @@ environment.add_child_relative(lightCarousel)
 
 lights = []
 
-greenLight = Light(1, (100, 255, 100), Matrix([[2],
+greenLight = Light(0.8, (100, 255, 100), Matrix([[2],
                                          [0],
                                          [0]]))
 lights.append(greenLight)
 
-redLight = Light(1, (255, 100, 100), Matrix([[0],
+redLight = Light(0.8, (255, 100, 100), Matrix([[0],
                                          [0],
                                          [-2]]))
 lights.append(redLight)
 
-blueLight = Light(1, (100, 100, 255), Matrix([[0],
+blueLight = Light(0.8, (100, 100, 255), Matrix([[0],
                                          [0],
                                          [2]]))
 lights.append(blueLight)
@@ -140,7 +140,7 @@ lights.append(blueLight)
 for light in lights:
     lightCarousel.add_child_relative(light)
 
-sun = SunLight(0.9, (220, 220, 200))
+sun = SunLight(0.8, (255, 255, 220))
 sun.rotate_euler_radians(0, 0, -math.pi / 4)
 
 environment.add_child_relative(sun)

@@ -845,8 +845,18 @@ def multiply_colours(colours:list[tuple]):
 
     return (result[0] * 255, result[1] * 255, result[2] * 255)
 
-def add_colours(colour1, colour2):
-    pass
+def add_colours(colours:list[tuple]):
+    result = []
+
+    for i in range(3):
+        channel = 0
+
+        for colour in colours:
+            channel += colour[i]
+
+        result.append(clamp(channel, 0, 255))
+
+    return (result[0], result[1], result[2])
 
 def screen_colours(colours:list[tuple]):
     result = [1, 1, 1]
@@ -872,7 +882,17 @@ def overlay_colours(colour1, colour2):
 
     return (result[0] * 255, result[1] * 255, result[2] * 255)
 
-        
+def squash_colour(colour1, colour2):
+    result = []
+
+    for i in range(3):
+        amount = colour2[i]
+
+        space = 255 - amount
+
+        result.append(space * (colour1[i] / 255) + amount)
+
+    return (result[0], result[1], result[2])
 
 
 
@@ -1152,7 +1172,7 @@ DEPTHBUFFER = Image((128, 96), (5, 5), False)
 
 
 
-AMBIENTLIGHT = (20, 20, 20) # This is the colour absolute shadow is interpolated to 
+AMBIENTLIGHT = (10, 10, 10) # This is the colour absolute shadow is interpolated to 
 
 
 
@@ -1227,7 +1247,7 @@ class Tri(Abstract): # This should be a child to an abstract which will serve as
                 
             casts.append(cast)
 
-        return clamp_colour(average_colours(casts))
+        return add_colours(casts)
         
 
 
