@@ -826,6 +826,11 @@ def average_colours(colours:list[tuple]):
 
     return (average[0], average[1], average[2])
 
+def clamp_colour(colour:tuple):
+    return (clamp(colour[0], 0, 255),
+            clamp(colour[1], 0, 255),
+            clamp(colour[2], 0, 255))
+
 
 
 # Blend modes
@@ -840,6 +845,9 @@ def multiply_colours(colours:list[tuple]):
 
     return (result[0] * 255, result[1] * 255, result[2] * 255)
 
+def add_colours(colour1, colour2):
+    pass
+
 def screen_colours(colours:list[tuple]):
     result = [1, 1, 1]
 
@@ -850,24 +858,28 @@ def screen_colours(colours:list[tuple]):
 
     return ((1 - result[0]) * 255, (1 - result[1]) * 255, (1 - result[2]) * 255)
 
-def soft_light_colours(colour1, colour2):
+def overlay_colours(colour1, colour2):
     result = []
 
     for i in range(3):
-        a = colour1[i] / 255
-        b = colour2[i] / 255
+        channel1 = colour1[i] / 255
+        channel2 = colour2[i] / 255
 
-        result.append(((1 - (2 * b)) * (a ** 2) + (2 * a * b)) * 255) 
-        # This is the Pegtop soft light formula.
+        if channel2 >= 0.5:
+            result.append(1 - 2 * (1 - channel1) * (1 - channel2))
+        else:
+            result.append(2 * channel1 * channel2)
 
-    return (result[0], result[1], result[2])
+    return (result[0] * 255, result[1] * 255, result[2] * 255)
+
+        
 
 
 
 def interpolate_colour(colour1:tuple, colour2:tuple, t:float):
-    return (math.floor(colour1[0] + (colour2[0] - colour1[0]) * abs(t)),
-            math.floor(colour1[1] + (colour2[1] - colour1[1]) * abs(t)),
-            math.floor(colour1[2] + (colour2[2] - colour1[2]) * abs(t)))
+    return (clamp(math.floor(colour1[0] + (colour2[0] - colour1[0]) * abs(t)), 0, 255),
+            clamp(math.floor(colour1[1] + (colour2[1] - colour1[1]) * abs(t)), 0, 255),
+            clamp(math.floor(colour1[2] + (colour2[2] - colour1[2]) * abs(t)), 0, 255))
 
 def interpolate_value(float1:float, float2:float, t:float):
     return float1 + (float2 - float1) * abs(t)
@@ -926,6 +938,8 @@ class Image(): # This is like a shitty fake version of pygame.Surface
         uv1 = kwargs.get("uv1", None)
         uv2 = kwargs.get("uv2", None)
 
+        lightCast = kwargs.get("lightCast", None)
+
         if 0 <= y < self.resolution[1]:
             lineLength = abs(x2 - x1)
             for i in range(x1, x2, 1 if x1 < x2 else -1):
@@ -939,7 +953,11 @@ class Image(): # This is like a shitty fake version of pygame.Surface
                             self.contents[y][i] = pixelColour
                             depthBuffer.contents[y][i] = depth
                         elif texture:
-                            self.contents[y][i] = texture.get_colour_at(interpolate_coordinate(uv1, uv2, interpolationAmount))
+                            if lightCast:
+                                self.contents[y][i] = overlay_colours(texture.get_colour_at(interpolate_coordinate(uv1, uv2, interpolationAmount)), lightCast)
+                            else:
+                                self.contents[y][i] = texture.get_colour_at(interpolate_coordinate(uv1, uv2, interpolationAmount))
+                                
                             depthBuffer.contents[y][i] = depth
                         else:
                             self.contents[y][i] = colour1
@@ -965,6 +983,8 @@ class Image(): # This is like a shitty fake version of pygame.Surface
         uv2 = kwargs.get("uv2", None)
         uv3 = kwargs.get("uv3", None)
 
+        lightCast = kwargs.get("lightCast", None)
+
         height = point[1] - bottomLeft[1]
         leftToPoint = bottomLeft[0] - point[0]
         rightToPoint = bottomRight[0] - point[0]
@@ -987,7 +1007,8 @@ class Image(): # This is like a shitty fake version of pygame.Surface
                 self.draw_horizontal_line(left, right, y, depthBuffer, leftDepth, rightDepth,
                                           texture=texture,
                                           uv1=interpolate_coordinate(uv1, uv3, amountDone),
-                                          uv2=interpolate_coordinate(uv2, uv3, amountDone))
+                                          uv2=interpolate_coordinate(uv2, uv3, amountDone),
+                                          lightCast=lightCast)
             else:
                 self.draw_horizontal_line(left, right, y, depthBuffer, leftDepth, rightDepth, colour1)
                 
@@ -1060,14 +1081,6 @@ class Image(): # This is like a shitty fake version of pygame.Surface
             sliceAmount = (vertices[1][1] - vertices[2][1]) / triangleHeight
         else:
             sliceAmount = 0
-
-        if lightCast: # This is very inefficient for textured tris, remove later
-            for i in range(3):
-
-                if colours[i]:
-                    print(f"Before: {colours[i]}")
-                    colours[i] = screen_colours([colours[i], lightCast])
-                    print(f"After: {colours[i]}")
         
         sliceCoordinate = (math.floor(vertices[2][0] + (topToBottomHorizontal * (sliceAmount))), vertices[1][1])
         sliceDepth = interpolate_value(depths[0], depths[2], 1 - sliceAmount)
@@ -1088,11 +1101,13 @@ class Image(): # This is like a shitty fake version of pygame.Surface
             self.draw_flat_based_triangle(vertices[1], sliceCoordinate, vertices[2], 
                                           depthBuffer, depths[1], sliceDepth, depths[2],
                                           texture=texture,
-                                          uv1=uvs[1], uv2=sliceUV, uv3=uvs[2])
+                                          uv1=uvs[1], uv2=sliceUV, uv3=uvs[2],
+                                          lightCast=lightCast)
             self.draw_flat_based_triangle(vertices[1], sliceCoordinate, vertices[0], 
                                           depthBuffer, depths[1], sliceDepth, depths[0],
                                           texture=texture,
-                                          uv1=uvs[1], uv2=sliceUV, uv3=uvs[0])
+                                          uv1=uvs[1], uv2=sliceUV, uv3=uvs[0],
+                                          lightCast=lightCast)
             
         else:
             self.draw_flat_based_triangle(vertices[1], sliceCoordinate, vertices[2], 
@@ -1137,7 +1152,7 @@ DEPTHBUFFER = Image((128, 96), (5, 5), False)
 
 
 
-AMBIENTLIGHT = (0, 0, 0) # This is the colour absolute shadow is interpolated to 
+AMBIENTLIGHT = (20, 20, 20) # This is the colour absolute shadow is interpolated to 
 
 
 
@@ -1184,63 +1199,35 @@ class Tri(Abstract): # This should be a child to an abstract which will serve as
         edge1 = vertex2.subtract(vertex1)
         edge2 = vertex3.subtract(vertex1)
 
-        return edge1.get_cross_product(edge2).set_magnitude(1)
+        return self.objectiveDistortion.apply(edge1.get_cross_product(edge2)).set_magnitude(1)
     
-    def get_center(self):
-        center = [[0],
-                  [0],
-                  [0]]
-        
-        print(f"Tags: {self.get_tags()}")
-        
+
+    def get_light_cast(self, lights:list[Abstract], triObjectiveVertices:Matrix):
+        vertices = triObjectiveVertices.get_contents()
+        center = []
+
         for i in range(3):
-            for vertex in self.vertices.get_row(i).get_contents():
-                center[i][0] += vertex[i]
+            center.append([(vertices[i][0] + vertices[i][1] + vertices[i][2]) / 3])
 
-            center[i][0] /= 3
+        center = Matrix(center)
 
-        print(f"Relative center: {center}")
+        casts = [AMBIENTLIGHT]
 
-        return self.objectiveDistortion.apply(Matrix(center)).add(self.objectiveLocation)
-    
-    def get_light_cast(self, lights):
-        if lights:
-            print("\n\nCALCULATING TRIANGLE LIGHTING")
+        for light in lights:
+            dirAndDist = light.get_direction_and_distance(center)
 
-            center = self.get_center()
-            print(f"Center:{center.get_contents()}")
+            if dirAndDist[1] > 0.1:
+                angleAmount = self.get_normal().get_dot_product(dirAndDist[0])
+                
+                interpolationAmount = (1 / ((dirAndDist[1] / light.brightness) ** 2)) * ((angleAmount + 1) / 2)
 
-            casts = []
+                cast = interpolate_colour((0, 0, 0), light.colour, interpolationAmount)
+            else:
+                cast = (255, 255, 255)
+                
+            casts.append(cast)
 
-            for light in lights:
-                direction = light.objectiveLocation.subtract(center)
-                distance = direction.get_magnitude()
-                direction = direction.set_magnitude(1)
-
-                print(f"distance: {distance}")
-
-                if distance > 0:
-                    cast = interpolate_colour(AMBIENTLIGHT, light.colour, clamp(1 / ((distance / light.brightness) ** 2), 0, 1))
-                    
-                    print(f"distance / brightness: {distance / light.brightness}")
-                    print(f"^ squared: {(distance / light.brightness) ** 2}")
-                    print(f"brightness: {1 / ((distance / light.brightness) ** 2)}")
-                    print(f"\ncurrent cast: {cast}")
-                else:
-                    cast = light.colour
-
-                angleAmount = self.get_normal().get_dot_product(direction)
-                print(f"Angle amount: {angleAmount}")
-
-                cast = interpolate_colour(AMBIENTLIGHT, cast, (angleAmount + 1) / 2)
-                print(f"new cast: {cast}")
-
-                casts.append(cast)
-
-            print(f"Light cast on tri is {average_colours(casts)}")
-            return average_colours(casts)
-        
-        return (0, 0, 0)
+        return clamp_colour(average_colours(casts))
         
 
 
@@ -1348,8 +1335,8 @@ class Plane(Mesh):
                                              [corner[0], 0, corner[1] + quadHeight],
                                              [corner[0] + quadWidth, 0, corner[1]]], self.colour, self.lit, ["PlaneTri"]))
                 self.add_child_relative(Tri([[corner[0] + quadWidth, 0, corner[1] + quadHeight],
-                                             [corner[0], 0, corner[1] + quadHeight],
-                                             [corner[0] + quadWidth, 0, corner[1]]], self.colour, self.lit, ["PlaneTri"]))
+                                             [corner[0] + quadWidth, 0, corner[1]],
+                                             [corner[0], 0, corner[1] + quadHeight]], self.colour, self.lit, ["PlaneTri"]))
         
     def set_quad_resolution(self, quadResolution:tuple):
         tris = self.get_children_with_tag("PlaneTri")
@@ -1427,47 +1414,36 @@ class Cube(Mesh):
 
     def generate_cube(self):
         # Front
-        self.add_child_relative(Tri([[-0.5,-0.5,-0.5],
-                                     [-0.5,0.5,-0.5],
-                                     [0.5,-0.5,-0.5]], self.colour, self.lit, ["CubeTri"]))
-        self.add_child_relative(Tri([[0.5,0.5,-0.5],
-                                     [-0.5,0.5,-0.5],
-                                     [0.5,-0.5,-0.5]], self.colour, self.lit, ["CubeTri"]))
-        # Back
-        self.add_child_relative(Tri([[0.5,0.5,0.5],
-                                     [-0.5,0.5,0.5],
-                                     [0.5,-0.5,0.5]], self.colour, self.lit, ["CubeTri"]))
-        self.add_child_relative(Tri([[-0.5,-0.5,0.5],
-                                     [-0.5,0.5,0.5],
-                                     [0.5,-0.5,0.5]], self.colour, self.lit, ["CubeTri"]))
-        # Left
-        self.add_child_relative(Tri([[-0.5,-0.5,0.5],
-                                     [-0.5,0.5,0.5],
-                                     [-0.5,-0.5,-0.5]], self.colour, self.lit, ["CubeTri"]))
-        self.add_child_relative(Tri([[-0.5,0.5,-0.5],
-                                     [-0.5,0.5,0.5],
-                                     [-0.5,-0.5,-0.5]], self.colour, self.lit, ["CubeTri"]))
-        # Right
-        self.add_child_relative(Tri([[0.5,0.5,-0.5],
-                                     [0.5,0.5,0.5],
-                                     [0.5,-0.5,-0.5]], self.colour, self.lit, ["CubeTri"]))
-        self.add_child_relative(Tri([[0.5,-0.5,0.5],
-                                     [0.5,0.5,0.5],
-                                     [0.5,-0.5,-0.5]], self.colour, self.lit, ["CubeTri"]))
-        # Top
-        self.add_child_relative(Tri([[-0.5,0.5,-0.5],
-                                     [-0.5,0.5,0.5],
-                                     [0.5,0.5,-0.5]], self.colour, self.lit, ["CubeTri"]))
-        self.add_child_relative(Tri([[0.5,0.5,0.5],
-                                     [-0.5,0.5,0.5],
-                                     [0.5,0.5,-0.5]], self.colour, self.lit, ["CubeTri"]))
-        # Bottom
-        self.add_child_relative(Tri([[-0.5,-0.5,-0.5],
-                                     [-0.5,-0.5,0.5],
-                                     [0.5,-0.5,-0.5]], self.colour, self.lit, ["CubeTri"]))
-        self.add_child_relative(Tri([[0.5,-0.5,0.5],
-                                     [-0.5,-0.5,0.5],
-                                     [0.5,-0.5,-0.5]], self.colour, self.lit, ["CubeTri"]))
+        face1 = Matrix([[-0.5, -0.5, 0.5],
+                        [0.5, -0.5, 0.5],
+                        [-0.5, 0.5, 0.5]]).get_transpose()
+        
+        face2 = Matrix([[0.5, 0.5, 0.5],
+                        [-0.5, 0.5, 0.5],
+                        [0.5, -0.5, 0.5]]).get_transpose()
+        
+        rotation = I3
+        
+        for i in range(4):
+            self.add_child_relative(Tri(rotation.apply(face1).get_transpose().get_contents(), self.colour, self.lit, ["CubeTri"]))
+            self.add_child_relative(Tri(rotation.apply(face2).get_transpose().get_contents(), self.colour, self.lit, ["CubeTri"]))
+
+            rotation = rotation.apply(Matrix([[0, 0, 1],
+                                              [0, 1, 0],
+                                              [-1, 0, 0]]))
+            
+        rotation = Matrix([[1, 0, 0],
+                           [0, 0, -1],
+                           [0, 1, 0]])
+
+        for i in range(2):
+            self.add_child_relative(Tri(rotation.apply(face1).get_transpose().get_contents(), self.colour, self.lit, ["CubeTri"]))
+            self.add_child_relative(Tri(rotation.apply(face2).get_transpose().get_contents(), self.colour, self.lit, ["CubeTri"]))
+
+            rotation = rotation.apply(Matrix([[1, 0, 0],
+                                              [0, -1, 0],
+                                              [0, 0, -1]]))
+
         
     def set_pattern_texture(self, texture:Texture):
         textureSize = texture.surface.get_size()
@@ -1594,7 +1570,31 @@ class Light(Abstract):
         super().__init__(location, distortion, tags)
 
         self.brightness = brightness if brightness else 1
-        self.colour = colour if colour else {255, 255, 255}
+        self.colour = colour if colour else (255, 255, 255)
+
+    def get_direction_and_distance(self, point):
+        direction = self.objectiveLocation.subtract(point)
+        distance = direction.get_magnitude()
+        direction = direction.set_magnitude(1)
+
+        return (direction, distance)
+    
+class SunLight(Light):
+    def __init__(self, 
+                 brightness:float=None,
+                 colour:tuple=None, 
+                 distortion:Matrix=None, 
+                 tags:list[str]=None):
+        super().__init__(ORIGIN, distortion, tags)
+
+        self.brightness = brightness if brightness else 1
+        self.colour = colour if colour else (255, 255, 255)
+
+    def get_direction_and_distance(self, point):
+        return (self.objectiveDistortion.apply(Matrix([[0],
+                                                       [1],
+                                                       [0]])), 1)
+
         
 
         
@@ -1652,25 +1652,42 @@ class Camera(Abstract):
                 0 <= vertex3[1] <= displaySizeY * 2 - 1)):
 
                 if tri.lit:
-                    lightCast = tri.get_light_cast(lights)
+                    lightCast = tri.get_light_cast(lights, triObjectiveVertices)
                 else:
-                    lightCast = (127, 127, 127)
+                    lightCast = None
                 
                 if type(tri) == GradientTri:
+                    if tri.lit:
+                        colour1 = overlay_colours(tri.albedo1, lightCast)
+                        colour2 = overlay_colours(tri.albedo2, lightCast)
+                        colour3 = overlay_colours(tri.albedo3, lightCast)
+                    else:
+                        colour1 = tri.albedo1
+                        colour2 = tri.albedo2
+                        colour3 = tri.albedo3
+
                     DISPLAY.draw_triangle(vertex1, vertex2, vertex3, 
                                           depthBuffer, triCameraVertices[2][0], triCameraVertices[2][1], triCameraVertices[2][2],
-                                          tri.albedo1, tri.albedo2, tri.albedo3)
+                                          colour1, 
+                                          colour2, 
+                                          colour3)
                     
                 elif type(tri) == TextureTri:
                     DISPLAY.draw_triangle(vertex1, vertex2, vertex3,
                                           depthBuffer, triCameraVertices[2][0], triCameraVertices[2][1], triCameraVertices[2][2],
                                           texture=tri.texture,
-                                          uv1=tri.uv1, uv2=tri.uv2, uv3=tri.uv3)
+                                          uv1=tri.uv1, uv2=tri.uv2, uv3=tri.uv3,
+                                          lightCast = lightCast)
 
                 else:
+                    if tri.lit:
+                        colour = overlay_colours(tri.albedo, lightCast)
+                    else:
+                        colour = tri.albedo
+
                     DISPLAY.draw_triangle(vertex1, vertex2, vertex3, 
                                           depthBuffer, triCameraVertices[2][0], triCameraVertices[2][1], triCameraVertices[2][2],
-                                          lightCast, lightCast=lightCast)
+                                          colour)
                     
             #pygame.draw.polygon(window, tri.albedo, screenSpaceCoordinates)
         
@@ -1679,7 +1696,7 @@ class Camera(Abstract):
     def rasterize(self):
         tris = ROOT.get_substracts_of_type(Tri) + ROOT.get_substracts_of_type(GradientTri) + ROOT.get_substracts_of_type(TextureTri)
         
-        lights = ROOT.get_substracts_of_type(Light)
+        lights = ROOT.get_substracts_of_type(Light) + ROOT.get_substracts_of_type(SunLight)
 
         inversion = self.objectiveDistortion.get_3x3_inverse()
         location = self.objectiveLocation.get_contents()
