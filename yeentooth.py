@@ -2240,11 +2240,11 @@ def process_bodies(frameDelta):
                             limitingFriction = (body.roughness + otherBody.roughness) / 2
                             
                             # This is the direction opposing the body's movement parallel to the collision surface
-                            bodyOpposingForce = body.velocity.subtract(collisionNormal.multiply_contents(u1)).set_magnitude(1).multiply_contents(-limitingFriction)
+                            bodyOpposingForce = body.velocity.subtract(collisionNormal.multiply_contents(u1)).multiply_contents(-limitingFriction * m1)
 
                             body.add_force(bodyOpposingForce)
                             
-                            otherBodyOpposingForce = otherBody.velocity.subtract(collisionNormal.multiply_contents(u2)).set_magnitude(1).multiply_contents(-limitingFriction)
+                            otherBodyOpposingForce = otherBody.velocity.subtract(collisionNormal.multiply_contents(u2)).multiply_contents(-limitingFriction * m2)
 
                             otherBody.add_force(otherBodyOpposingForce)
 
@@ -2307,13 +2307,14 @@ def process_bodies(frameDelta):
                             #print(f"Limiting friction: {friction}")
                             
                             # This is the direction opposing the body's movement parallel to the collision surface
-                            bodyOpposingForce = body.velocity.subtract(collisionNormal.multiply_contents(u1)).set_magnitude(1).multiply_contents(-friction)
+                            bodyOpposingForce = body.velocity.subtract(collisionNormal.multiply_contents(u1)).multiply_contents(-friction * m1)
 
                             #print(f"{body.tags} recieving opposing force {bodyOpposingForce.get_contents()}")
 
+                            # As you can see, this isn't an accurate simulation of friction. But it's close enough!
                             body.add_force(bodyOpposingForce)
                             
-                            otherBodyOpposingForce = otherBody.velocity.subtract(collisionNormal.multiply_contents(u2)).set_magnitude(1).multiply_contents(-friction)
+                            otherBodyOpposingForce = otherBody.velocity.subtract(collisionNormal.multiply_contents(u2)).multiply_contents(-friction * m2)
                             #print(f"{otherBody.tags} recieving opposing force {otherBodyOpposingForce.get_contents()}")
 
                             otherBody.add_force(otherBodyOpposingForce)

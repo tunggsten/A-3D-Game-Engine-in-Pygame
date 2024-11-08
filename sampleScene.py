@@ -124,13 +124,13 @@ player.add_child_relative(listener)
 
 
 
-playerTopBody = Body(1, 2, 2, False)
+playerTopBody = Body(1, 1, 0.5, False)
 playerTopCollider = SphereCollider(0.5, playerTopBody, Matrix([[0],
                                                             [0.25],
                                                             [0]]))
 player.add_child_relative(playerTopBody)
 
-playerBottomBody = Body(1, 2, 2, False)
+playerBottomBody = Body(1, 1, 0.5, False)
 playerBottomCollider = SphereCollider(0.5, playerBottomBody, Matrix([[0],
                                                             [-0.5],
                                                             [0]]))
@@ -190,7 +190,7 @@ environment.add_child_relative(backWall)
 
 # Floor
 
-floor = Body(1, 0.8, 5, False, Matrix([[2],
+floor = Body(1, 0.8, 0.5, False, Matrix([[2],
                                     [-1],
                                     [-2]]))
 
@@ -206,7 +206,7 @@ floor.add_child_relative(floorVisual)
 balls = []
 
 for i in range(5):
-    ball = Body(1, 0.8, 10, True, Matrix([[0],
+    ball = Body(1, 0.8, 5, True, Matrix([[0],
                                       [i],
                                       [0]]))
     environment.add_child_relative(ball)
