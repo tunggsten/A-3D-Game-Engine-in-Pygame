@@ -266,6 +266,7 @@ for light in lights:
 
 sun = SunLight(0.8, (255, 255, 220))
 sun.rotate_euler_radians(0, 0, -math.pi / 4)
+sun.rotate_euler_radians(0, math.pi / 6, 0)
 
 environment.add_child_relative(sun)
 
