@@ -246,17 +246,17 @@ environment.add_child_relative(lightCarousel)
 
 lights = []
 
-greenLight = Light(0.85, (100, 255, 100), Matrix([[2],
+greenLight = Light(0.9, (100, 255, 100), Matrix([[2],
                                          [0],
                                          [0]]))
 lights.append(greenLight)
 
-redLight = Light(0.85, (255, 100, 100), Matrix([[0],
+redLight = Light(0.9, (255, 100, 100), Matrix([[0],
                                          [0],
                                          [-2]]))
 lights.append(redLight)
 
-blueLight = Light(0.85, (100, 100, 255), Matrix([[0],
+blueLight = Light(0.9, (100, 100, 255), Matrix([[0],
                                          [0],
                                          [2]]))
 lights.append(blueLight)
@@ -272,10 +272,51 @@ environment.add_child_relative(sun)
 
 
 
-# ---------------- MAIN LOOP ----------------
+# ---------------- PER FRAME PROCESS FUNCTIONS ----------------
 
-movementSpeed = 4
-lookSpeed = 2
+# Here, we'll define what we want each of our abstracts to do each frame, and then
+# call them in whatever order we want.
+
+def ProcessPlayer(frameDelta:float, keys):
+
+    # Define our speeds
+    movementSpeed = 4
+    lookSpeed = 2
+
+    # Turn the status of the movement keys into a vector
+    if keys[pygame.K_w]:
+        playerMovement[2] = [1]
+    if keys[pygame.K_s]:
+        playerMovement[2] = [-1]
+
+    if keys[pygame.K_a]:
+        playerMovement[0] = [-1]
+    if keys[pygame.K_d]:
+        playerMovement[0] = [1]
+
+    if keys[pygame.K_SPACE]:
+        playerMovement[1] = [1]
+    if keys[pygame.K_LSHIFT]:
+        playerMovement[1] = [-1]
+
+    # Move the player by the normalised version of that vector
+    player.translate_relative(Matrix(playerMovement).set_magnitude(movementSpeed * frameDelta))
+        
+    # Do the same but for the camera pretty much
+    if keys[pygame.K_RIGHT]:
+        player.rotate_euler_radians(0, lookSpeed * frameDelta, 0)
+    if keys[pygame.K_LEFT]:
+        player.rotate_euler_radians(0, -lookSpeed * frameDelta, 0)
+
+    if keys[pygame.K_UP]:
+        camera.rotate_euler_radians(-lookSpeed * frameDelta, 0, 0)
+    if keys[pygame.K_DOWN]:
+        camera.rotate_euler_radians(lookSpeed * frameDelta, 0, 0)
+
+
+
+
+# ---------------- MAIN LOOP ----------------
 
 frameDelta = 0
 
@@ -293,39 +334,15 @@ while running:
                         [0]]
 
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_w]:
-        playerMovement[2] = [1]
-    if keys[pygame.K_s]:
-        playerMovement[2] = [-1]
 
-    if keys[pygame.K_a]:
-        playerMovement[0] = [-1]
-    if keys[pygame.K_d]:
-        playerMovement[0] = [1]
-
-    if keys[pygame.K_SPACE]:
-        playerMovement[1] = [1]
-    if keys[pygame.K_LSHIFT]:
-        playerMovement[1] = [-1]
+    ProcessPlayer(frameDelta, keys)
 
     if keys[pygame.K_b]:
         boom.play()
 
-    player.translate_relative(Matrix(playerMovement).set_magnitude(movementSpeed * frameDelta))
-        
-    if keys[pygame.K_RIGHT]:
-        player.rotate_euler_radians(0, lookSpeed * frameDelta, 0)
-    if keys[pygame.K_LEFT]:
-        player.rotate_euler_radians(0, -lookSpeed * frameDelta, 0)
-
-    if keys[pygame.K_UP]:
-        camera.rotate_euler_radians(-lookSpeed * frameDelta, 0, 0)
-    if keys[pygame.K_DOWN]:
-        camera.rotate_euler_radians(lookSpeed * frameDelta, 0, 0)
-
     teapot.rotate_euler_radians(0, frameDelta, 0)
 
-    lightCarousel.rotate_euler_radians(0, -frameDelta / 3, 0)
+    lightCarousel.rotate_euler_radians(0, -frameDelta / 1.5, 0)
 
     for ball in balls:
         ballLocation = ball.objectiveLocation.get_contents()
