@@ -7,7 +7,9 @@
 
 ## **Note:**
 
-~~For some reason this runs *incredibly* slow on Windows. Literally it runs 20 times faster on my 11 year old MacBook Pro with Ubuntu than it does on my 2021 windows pc ☠️ Tbf it runs horribly on anything that doesn't border on precognition when it comes to single core cpu performance, but Windows seems to be a challenge for it regardless of the device you're running it on.~~ So it turns out this was because I was printing 13,429 debug messages to the console every frame and Linux is faster at printing stuff apparently 💀
+~~For some reason this runs *incredibly* slow on Windows. Literally it runs 20 times faster on my 11 year old MacBook Pro with Ubuntu than it does on my 2021 windows pc ☠️ Tbf it runs horribly on anything that doesn't border on precognition when it comes to single core cpu performance, but Windows seems to be a challenge for it regardless of the device you're running it on.~~ 
+
+So it turns out this was because I was printing 13,429 debug messages to the console every frame and Linux is faster at printing stuff apparently 💀
 
 ## **Info:**
 
