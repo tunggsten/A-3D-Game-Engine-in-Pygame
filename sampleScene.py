@@ -108,7 +108,7 @@ player.add_child_relative(camera)
  
 # Hearing is also pretty useful, so we'll give them the option for that as well.
 
-listener = Listener(1, 2) # Important distinction:
+ears = Listener(1, 2) # Important distinction:
 
                           # Volume (the first one) is how loud sound is played back to the 
                           # player's speakers.
@@ -117,7 +117,7 @@ listener = Listener(1, 2) # Important distinction:
                           
                           # Ultimately, they're pretty similar, but just bear that in mind.
                           
-player.add_child_relative(listener)
+player.add_child_relative(ears)
 
 # This vessel is going to be able to move through stuff, but we still want to give it some
 # solid body to whack things with. Let's add collision!
@@ -277,11 +277,15 @@ environment.add_child_relative(sun)
 # Here, we'll define what we want each of our abstracts to do each frame, and then
 # call them in whatever order we want.
 
-def ProcessPlayer(frameDelta:float, keys):
+def process_player(frameDelta:float, keys):
 
     # Define our speeds
     movementSpeed = 4
     lookSpeed = 2
+    
+    playerMovement = [[0],
+                      [0],
+                      [0]]
 
     # Turn the status of the movement keys into a vector
     if keys[pygame.K_w]:
@@ -309,10 +313,69 @@ def ProcessPlayer(frameDelta:float, keys):
         player.rotate_euler_radians(0, -lookSpeed * frameDelta, 0)
 
     if keys[pygame.K_UP]:
-        camera.rotate_euler_radians(-lookSpeed * frameDelta, 0, 0)
+        turnAmount = -lookSpeed * frameDelta
+        camera.rotate_euler_radians(turnAmount, 0, 0)
+        
+        # This checks if the camera exceeded 90 degrees from facing forward, and moves it back if it has.
+        if camera.get_distortion_relative().get_contents()[2][2] < 0:
+            camera.rotate_euler_radians(-turnAmount, 0, 0)
+            
     if keys[pygame.K_DOWN]:
-        camera.rotate_euler_radians(lookSpeed * frameDelta, 0, 0)
+        turnAmount = lookSpeed * frameDelta
+        camera.rotate_euler_radians(turnAmount, 0, 0)
+        
+        if camera.get_distortion_relative().get_contents()[2][2] < 0:
+            camera.rotate_euler_radians(-turnAmount, 0, 0)
+            
 
+def process_teapot(frameDelta:float, keys):
+    rotationSpeed = 1
+    
+    if keys[pygame.K_b]:
+        boom.play()
+
+    teapot.rotate_euler_radians(0, rotationSpeed * frameDelta, 0)
+    
+
+def process_lights(frameDelta:float):
+    rotationSpeed = -0.8
+    
+    lightCarousel.rotate_euler_radians(0, rotationSpeed * frameDelta, 0)
+    
+    
+def process_balls(frameDelta:float):
+    for ball in balls:
+        ballLocation = ball.objectiveLocation.get_contents()
+        
+        if (not -2 < ballLocation[1][0] < 6):
+            ball.set_location_objective(Matrix([[random.random()],
+                                                [0],
+                                                [-random.random()]]))
+            
+            ball.velocity = ORIGIN   
+            
+            
+def process_sensors():
+    WINDOW.fill((255, 255, 255))
+    camera.render()
+
+    for listener in ROOT.get_substracts_of_type(Listener):
+        listener.listen()
+            
+            
+pygame.font.init()
+font = pygame.font.SysFont(None, 30)
+
+def analyse_framerate(frameDelta:float):
+    if frameDelta > 0:
+        textSurface = font.render(f"{round(1 / frameDelta, 3)} fps", False, (0, 0, 0))
+    else:
+        textSurface = font.render("tf your framerate's 0 somehow", False, (0, 0, 0))
+        
+    WINDOW.blit(textSurface, (0, 0))
+        
+    if frameDelta > 1 / 12:
+        WINDOW.blit(font.render("ur pc boutta explode", False, (0, 0, 0)), (0, 40))
 
 
 
@@ -328,45 +391,20 @@ while running:
     for event in events:
         if event.type == pygame.QUIT:
             running = False
-            
-    playerMovement = [[0],
-                        [0],
-                        [0]]
 
     keys = pygame.key.get_pressed()
 
-    ProcessPlayer(frameDelta, keys)
-
-    if keys[pygame.K_b]:
-        boom.play()
-
-    teapot.rotate_euler_radians(0, frameDelta, 0)
-
-    lightCarousel.rotate_euler_radians(0, -frameDelta / 1.5, 0)
-
-    for ball in balls:
-        ballLocation = ball.objectiveLocation.get_contents()
-        if (not -2 < ballLocation[1][0] < 6):
-            ball.set_location_objective(Matrix([[random.random()],
-                            [0],
-                            [-random.random()]]))
-            ball.velocity = ORIGIN
+    process_player(frameDelta, keys)
+    process_teapot(frameDelta, keys)
+    process_lights(frameDelta)
+    process_balls(frameDelta)
 
     process_bodies(frameDelta)
         
-    window.fill((255, 255, 255))
-    camera.render()
-
-    listener.listen()
+    process_sensors()
         
     frameDelta = time.time() - startTime
-
-    if frameDelta > 0.1:
-        print("Framedrop detected")
-
-    try:
-        print(f"Finished frame in {frameDelta} seconds. \nEquivalent to {1 / (frameDelta)} Hz \n")
-    except:
-        print("Very fast")
+    
+    analyse_framerate(frameDelta)
 
     pygame.display.flip()

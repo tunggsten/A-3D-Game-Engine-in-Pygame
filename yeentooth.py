@@ -793,7 +793,7 @@ ROOT = Abstract()
 pygame.init()
 SCREENSIZE = (640, 480)
 SCREENSIZEFROMCENTER = (SCREENSIZE[0] / 2, SCREENSIZE[1] / 2)
-window = pygame.display.set_mode(SCREENSIZE)
+WINDOW = pygame.display.set_mode(SCREENSIZE)
 pygame.display.set_caption("yeentooth")
 clock = pygame.time.Clock()
 running = True
@@ -1723,7 +1723,7 @@ class Camera(Abstract):
         for tri in tris:
             self.project_tri(locationMatrix, inversion, tri, DEPTHBUFFER, lights)
         
-        DISPLAY.render_image(window, (0, 0))
+        DISPLAY.render_image(WINDOW, (0, 0))
 
 
 
