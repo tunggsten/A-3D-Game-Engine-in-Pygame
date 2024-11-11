@@ -1,4 +1,4 @@
-from matrix import *
+from engine.matrix import *
 
 class Abstract:
     def __init__(self, 
@@ -347,7 +347,6 @@ class Abstract:
         self.distort_relative(rotationMatrix) # Change back to relative when it's fixed
         
 
-                            
-# Important default abstracts:
+# This is the head of our heirachy
 
 ROOT = Abstract()

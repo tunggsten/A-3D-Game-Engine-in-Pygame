@@ -1,4 +1,4 @@
-from yeentooth import *
+from engine.yeentooth import *
 import pygame
 import time
 import random
@@ -379,6 +379,8 @@ def analyse_framerate(frameDelta:float):
 # ---------------- MAIN LOOP ----------------
 
 frameDelta = 0
+
+running = True
 
 while running:
     startTime = time.time()
