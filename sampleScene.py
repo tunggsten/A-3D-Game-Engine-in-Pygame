@@ -3,9 +3,6 @@ import pygame
 import time
 import random
 
-
-
-
 # First, let's give ourselves an origin to work with.
 
 origin = Abstract() # This just makes a plain abstract with a default location and distortion.
