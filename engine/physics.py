@@ -250,7 +250,6 @@ class Body(Abstract):
 
 
 def process_bodies(frameDelta):
-    #print("\n--- STARTING PHYSICS PROCESS ---\n")
     bodies = ROOT.get_substracts_of_type(Body)
 
     bodiesToCheck = []
@@ -258,12 +257,9 @@ def process_bodies(frameDelta):
     for body in bodies:
         bodiesToCheck.append(body) # I had to do this otherwise they'd just be the same list
 
-    #print(f"Processing bodies {bodies}")
-
     if frameDelta > 0:
         for i in range(len(bodies)):
             body = bodiesToCheck.pop(0)
-            #print(f"Taken {body.tags} from {bodiesToCheck}")
                 
             if body.collider:
 
@@ -271,10 +267,8 @@ def process_bodies(frameDelta):
                     body.add_force(body.gravityDirection.set_magnitude(GRAVFIELDSTRENGTH * body.mass))
 
                     for otherBody in bodiesToCheck:
-                        #print(f"comparing {body.tags} with {otherBody.tags}")
                         
                         if body.collider.intersect(otherBody.collider, True):
-                            #print("Colliding!")
                             
                             # Here, we figure out the forces each body experiences.
 
@@ -322,22 +316,15 @@ def process_bodies(frameDelta):
                             # change of momentum (impulse over time), we can find the force applied by
                             # dividing the change in momentum by our frame delta.
 
-                            #print(f"Calculating collision between {body.tags} and {otherBody.tags}")
-
                             collisionNormal = body.collider.get_collision_normal(otherBody.collider)
-                            #print(f"Collision normal is {collisionNormal.get_contents()}")
 
                             e = (body.bounciness + otherBody.bounciness) / 2
 
                             m1 = body.mass
-
                             m2 = otherBody.mass
 
                             u1 = body.velocity.get_dot_product(collisionNormal)
-                            #print(f"U1 parallel to normal is {u1}")
-
                             u2 = otherBody.velocity.get_dot_product(collisionNormal)
-                            #print(f"U2 parallel to normal is {u2}")
 
                             if otherBody.dynamic:
                                 # Calculate impulse on body
@@ -403,22 +390,15 @@ def process_bodies(frameDelta):
                     for otherBody in bodies:
                         if body.collider.intersect(otherBody.collider, True):
 
-                            #print(f"Calculating collision between {body.tags} and {otherBody.tags}")
-
                             collisionNormal = body.collider.get_collision_normal(otherBody.collider)
-                            #print(f"Collision normal is {collisionNormal.get_contents()}")
 
                             e = (body.bounciness + otherBody.bounciness) / 2
 
                             m1 = body.mass
-
                             m2 = otherBody.mass
 
                             u1 = body.velocity.get_dot_product(collisionNormal)
-                            #print(f"U1 parallel to normal is {u1}")
-
                             u2 = otherBody.velocity.get_dot_product(collisionNormal)
-                            #print(f"U2 parallel to normal is {u2}")
 
                             if otherBody.dynamic:
                                 # This is almost exactly the same as above, just rearranged a bit differently
@@ -453,18 +433,14 @@ def process_bodies(frameDelta):
                             # The force pushing the particle, or the object's limiting friction.
 
                             friction = (body.roughness + otherBody.roughness) / 2
-                            #print(f"Limiting friction: {friction}")
                             
                             # This is the direction opposing the body's movement parallel to the collision surface
                             bodyOpposingForce = body.velocity.subtract(collisionNormal.multiply_contents(u1)).multiply_contents(-friction * m1)
-
-                            #print(f"{body.tags} recieving opposing force {bodyOpposingForce.get_contents()}")
 
                             # As you can see, this isn't an accurate simulation of friction. But it's close enough!
                             body.add_force(bodyOpposingForce)
                             
                             otherBodyOpposingForce = otherBody.velocity.subtract(collisionNormal.multiply_contents(u2)).multiply_contents(-friction * m2)
-                            #print(f"{otherBody.tags} recieving opposing force {otherBodyOpposingForce.get_contents()}")
 
                             otherBody.add_force(otherBodyOpposingForce)
                 

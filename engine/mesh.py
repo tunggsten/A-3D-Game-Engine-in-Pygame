@@ -6,6 +6,8 @@ from engine.matrix import *
 from engine.abstract import *
 from engine.image import *
 
+
+
 class Texture(): # This is here so I don't have to make a copy of a
                  # surface for every triangle it's mapped to
     def __init__(self, texturePath):
@@ -13,13 +15,6 @@ class Texture(): # This is here so I don't have to make a copy of a
     
     def get_colour_at(self, index:tuple):
         return self.surface.get_at(index)
-
-
-
-
-
-
-# ---------------- VISUAL ABSTRACTS ----------------
 
 
 
@@ -173,6 +168,7 @@ class Mesh(Abstract):
             self.add_child_relative(Tri(tri.vertices.get_transpose().get_contents(), colour, tri.lit, tri.tags))
             tri.kill_self_and_substracts()
             del tri
+
 
 
 class Plane(Mesh):
@@ -445,6 +441,8 @@ class Light(Abstract):
 
         return (direction, distance)
     
+
+
 class SunLight(Light):
     def __init__(self, 
                  brightness:float=None,
@@ -461,7 +459,6 @@ class SunLight(Light):
                                                        [1],
                                                        [0]])), 1)
 
-        
 
         
 class Camera(Abstract):
@@ -508,8 +505,6 @@ class Camera(Abstract):
             vertex3 = (math.floor(triCameraVertices[0][2] / (triCameraVertices[2][2] * self.perspectiveConstant) + displaySizeX), 
                        math.floor(-triCameraVertices[1][2] / (triCameraVertices[2][2] * self.perspectiveConstant) + displaySizeY))
 
-
-
             if ((0 <= vertex1[0] <= displaySizeX * 2 - 1 and # This is the worst way i could possibly do this.
                 0 <= vertex1[1] <= displaySizeY * 2 - 1) or   # Too bad! It works so it's staying
                 (0 <= vertex2[0] <= displaySizeX * 2 - 1 and
@@ -554,10 +549,6 @@ class Camera(Abstract):
                     DISPLAY.draw_triangle(vertex1, vertex2, vertex3, 
                                           depthBuffer, triCameraVertices[2][0], triCameraVertices[2][1], triCameraVertices[2][2],
                                           colour)
-                    
-            #pygame.draw.polygon(window, tri.albedo, screenSpaceCoordinates)
-        
-        
         
     def rasterize(self):
         tris = ROOT.get_substracts_of_type(Tri) + ROOT.get_substracts_of_type(GradientTri) + ROOT.get_substracts_of_type(TextureTri)
@@ -577,8 +568,6 @@ class Camera(Abstract):
             self.project_tri(locationMatrix, inversion, tri, DEPTHBUFFER, lights)
         
         DISPLAY.render_image(WINDOW, (0, 0))
-
-
 
     def render(self):
         self.rasterize()

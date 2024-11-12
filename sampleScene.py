@@ -262,8 +262,8 @@ for light in lights:
     lightCarousel.add_child_relative(light)
 
 sun = SunLight(0.8, (255, 255, 220))
-sun.rotate_euler_radians(0, 0, -math.pi / 4)
-sun.rotate_euler_radians(0, math.pi / 6, 0)
+sun.rotate_euler_radians(0, 0, -math.pi / 6)
+sun.rotate_euler_radians(0, math.pi / 3, 0)
 
 environment.add_child_relative(sun)
 
