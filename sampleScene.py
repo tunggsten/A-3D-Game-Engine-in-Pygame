@@ -1,4 +1,4 @@
-from engine.yeentooth import *
+from engine.tooth import *
 import pygame
 import time
 import random
