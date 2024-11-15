@@ -168,7 +168,7 @@ leftWall = Body(1, 0.8, 5, False, Matrix([[-2],
                                                          [0, 0, 1]]))
 leftWallCollider = PlaneCollider(4, 4, leftWall)
 
-leftWallVisual = Plane((4, 4), (0, 0, 0), True, ORIGIN, I3.multiply_contents(4))
+leftWallVisual = Plane((3, 3), (0, 0, 0), True, ORIGIN, I3.multiply_contents(4))
 leftWall.add_child_relative(leftWallVisual)
 
 environment.add_child_relative(leftWall)
@@ -180,7 +180,7 @@ backWall = Body(1, 0.8, 5, False, Matrix([[0],
                                                          [0, -1, 0]]))
 backWallCollider = PlaneCollider(4, 4, backWall)
 
-backWallVisual = Plane((4, 4), (0, 0, 0), True, ORIGIN, I3.multiply_contents(4))
+backWallVisual = Plane((3, 3), (0, 0, 0), True, ORIGIN, I3.multiply_contents(4))
 backWall.add_child_relative(backWallVisual)
 
 environment.add_child_relative(backWall)
@@ -195,7 +195,7 @@ environment.add_child_relative(floor)
 
 floorCollider = PlaneCollider(8, 8, floor)
 
-floorVisual = Plane((8, 8), (0, 0, 0), True, ORIGIN, I3.multiply_contents(8))
+floorVisual = Plane((6, 6), (0, 0, 0), True, ORIGIN, I3.multiply_contents(8))
 floor.add_child_relative(floorVisual)
 
 # Ball
