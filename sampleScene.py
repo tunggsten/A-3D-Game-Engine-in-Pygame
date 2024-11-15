@@ -274,6 +274,8 @@ environment.add_child_relative(sun)
 # Here, we'll define what we want each of our abstracts to do each frame, and then
 # call them in whatever order we want.
 
+
+
 def process_player(frameDelta:float, keys):
 
     # Define our speeds
@@ -325,6 +327,7 @@ def process_player(frameDelta:float, keys):
             camera.rotate_euler_radians(-turnAmount, 0, 0)
             
 
+
 def process_teapot(frameDelta:float, keys):
     rotationSpeed = 1
     
@@ -334,13 +337,15 @@ def process_teapot(frameDelta:float, keys):
     teapot.rotate_euler_radians(0, rotationSpeed * frameDelta, 0)
     
 
+
 def process_lights(frameDelta:float):
     rotationSpeed = -0.8
     
     lightCarousel.rotate_euler_radians(0, rotationSpeed * frameDelta, 0)
     
     
-def process_balls(frameDelta:float):
+
+def process_balls():
     for ball in balls:
         ballLocation = ball.objectiveLocation.get_contents()
         
@@ -352,6 +357,7 @@ def process_balls(frameDelta:float):
             ball.velocity = ORIGIN   
             
             
+
 def process_sensors():
     WINDOW.fill((255, 255, 255))
     camera.render()
@@ -359,6 +365,7 @@ def process_sensors():
     for listener in ROOT.get_substracts_of_type(Listener):
         listener.listen()
             
+
             
 pygame.font.init()
 font = pygame.font.SysFont(None, 30)
@@ -373,6 +380,7 @@ def analyse_framerate(frameDelta:float):
         
     if frameDelta > 1 / 12:
         WINDOW.blit(font.render("ur pc boutta explode", False, (0, 0, 0)), (0, 40))
+        
 
 
 
@@ -396,7 +404,7 @@ while running:
     process_player(frameDelta, keys)
     process_teapot(frameDelta, keys)
     process_lights(frameDelta)
-    process_balls(frameDelta)
+    process_balls()
 
     process_bodies(frameDelta)
         
