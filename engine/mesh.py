@@ -459,7 +459,8 @@ class SunLight(Light):
                                                        [1],
                                                        [0]])), 1)
 
-
+displayWidth = displaySizeX * 2 - 1
+displayHeight = displaySizeY * 2 - 1
         
 class Camera(Abstract):
     def __init__(self, location, distortion, fieldOfView:float):
@@ -505,12 +506,12 @@ class Camera(Abstract):
             vertex3 = (math.floor(triCameraVertices[0][2] / (triCameraVertices[2][2] * self.perspectiveConstant) + displaySizeX), 
                        math.floor(-triCameraVertices[1][2] / (triCameraVertices[2][2] * self.perspectiveConstant) + displaySizeY))
 
-            if ((0 <= vertex1[0] <= displaySizeX * 2 - 1 and # This is the worst way i could possibly do this.
-                0 <= vertex1[1] <= displaySizeY * 2 - 1) or   # Too bad! It works so it's staying
-                (0 <= vertex2[0] <= displaySizeX * 2 - 1 and
-                0 <= vertex2[1] <= displaySizeY * 2 - 1) or 
-                (0 <= vertex3[0] <= displaySizeX * 2 - 1 and
-                0 <= vertex3[1] <= displaySizeY * 2 - 1)):
+            if ((0 <= vertex1[0] <= displayWidth and # This is the worst way i could possibly do this.
+                0 <= vertex1[1] <= displayHeight) or   # Too bad! It works so it's staying
+                (0 <= vertex2[0] <= displayWidth and
+                0 <= vertex2[1] <= displayHeight) or 
+                (0 <= vertex3[0] <= displayWidth and
+                0 <= vertex3[1] <= displayHeight)):
 
                 if tri.lit:
                     lightCast = tri.get_light_cast(lights, triObjectiveVertices)

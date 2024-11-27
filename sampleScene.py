@@ -5,24 +5,8 @@ import random
 
 # First, let's give ourselves an origin to work with.
 
-origin = Abstract() # This just makes a plain abstract with a default location and distortion.
+origin = Abstract()
 ROOT.add_child_relative(origin)
-
-# Abstracts have to be underneath ROOT somewhere in the heirachy to get processed.
-
-# Otherwise, it ends up in its own little pocket universe where nothing gets recognised by 
-# the engine and it just sits around taking up memory. Wish I could do that irl ngl
-
-# That's why we have to use add_child_relative() whenever we make a new abstract to put it
-# in the heirachy.
-
-
-# You might be wondering why we make an abstract to use as an origin in the heirachy
-# considering it's exactly the same as ROOT.
-
-# This is because modifying ROOT will probably break something and I don't want to find out
-# what 💀
-
 
 
 
@@ -30,80 +14,14 @@ ROOT.add_child_relative(origin)
 
 player = Abstract(Matrix([[0],
                           [0],
-                          [-4]])) # Here, we're specifying where our abstract is with an 
-                                  # xyz location vector.
+                          [-4]]))
 
-origin.add_child_relative(player) # To clarify, this function moves the child you're adding
-                                  # so its location relative to the parent is what its 
-                                  # objective location used to be.
-                                  
-                                  # So far, we've only added children to stuff at the origin,
-                                  # but later we'll add some where this becomes important.
-                                  
-# It would probably be useful if the player has the option to see the game. Let's give them
-# a camera to see it with!
+origin.add_child_relative(player)
 
-camera = Camera(ORIGIN, I3, 60) # Here, we set its location and its distortion as well as
-                                # its field of view in degrees.
+camera = Camera(ORIGIN, I3, 60)
 player.add_child_relative(camera)
 
-# This is the first time distortion has shown up, so I'll do my best to explain it:
 
-# An abstract's distortion is a 3x3 matrix containing three xyz vectors in a row. Each one 
-# is the location that each of the axial vectors get warped to.
-
-# To imagine what this means, flip yourself off with your left hand.
-
-# Your thumb represents our X-axial vector at [[1],
-#                                              [0],
-#                                              [0]], 
-
-# your middle finger represents the Y at [[0],
-#                                         [1],
-#                                         [0]] 
-
-# and your index finger represents the Z at [[0],
-#                                            [0],
-#                                            [1]].
-
-# These combine together to make the I3 matrix, [[1, 0, 0],
-#                                                [0, 1, 0], 
-#                                                [0, 0, 1]]!
-
-# Now, let's say you want to rotate an abstract. We can do this by changing the distortion:
-
-# Flip yourself off again but now rotate your hand 90 degrees clockwise. Your middle finger
-# should be pointing to the right, your thumb should be pointing down and your index finger
-# should be the same.
-
-# Now, let's think about the coordinates the tips of your fingers have been mapped to:
-
-# Your thumb is now pointing directly down, which is going to be negative on the Y axis. So,
-# our X axial vector is now at [[0],
-#                               [-1],
-#                               [0]].
-
-# Your middle finger is pointing to the right, which is positive on the X axis: [[1],
-#                                                                                [0],
-#                                                                                [0]]
-
-# and your index finger is still at [[0],
-#                                    [0],
-#                                    [1]].
-
-# So, to rotate our abstract by 90 degrees around the Z axis, we make its distortion 
-# [[0, 1, 0],
-#  [-1, 0, 0], 
-#  [0, 0, 1]]! (you can stop flipping yourself off now)
-
-# Similarly, we can represent any orientation with a matrix like this, and we can even stretch,
-# squash or reflect our abstract by changing the magnitude of our axial vectors. (Don't do that
-# with your fingers!) If you'd like to learn more, search for maths resources on linear algebra.
-
-# Moving on!
-
- 
-# Hearing is also pretty useful, so we'll give them the option for that as well.
 
 ears = Listener(1, 2) # Important distinction:
 

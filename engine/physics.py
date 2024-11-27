@@ -2,9 +2,6 @@ from engine.clamp import *
 from engine.matrix import *
 from engine.abstract import *
 
-STEPSCALE = 1 # This is how many simulated seconds one second at runtime is equivalent to.
-              # It's here for the same reasons as UNITSCALE
-
 GRAVFIELDSTRENGTH = 9.81 # The strength of the scene's gravitational field 
                          # measured in Newtons per kilogram (NKg^-1)
 

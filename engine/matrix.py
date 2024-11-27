@@ -371,7 +371,7 @@ class Matrix:
                             #    `---'
                             #    _|_|_
 
-                                             # I'm not fucking getting the contents from
+                                             # I'm not getting the contents from
         rightContents = right.get_contents() # each object every single time idc about 
                                              # memory efficiency
 

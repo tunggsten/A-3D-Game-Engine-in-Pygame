@@ -26,7 +26,7 @@ class Abstract:
         # relative to the camera. With objective coordinates being stored, you
         # just have to read those from memory and compare them. However, with
         # relative coordinates I had to make a recursive function which
-        # would spend four fucking years every frame traversing all the way up
+        # would spend four million years every frame traversing all the way up
         # the scene tree to the objective origin doing matrix applications for
         # each link.
         
@@ -170,7 +170,7 @@ class Abstract:
     # Transform functionsDO NOT TOUCH EVER!!!!!!!!!!!11🚫🚫🚫🚫🚫🚫🚫🚫
     # ⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⛔⛔⛔⛔⛔⛔⛔⛔⛔⛔⛔⛔☣️☣️☣️☣️☣️☣️☣️☣️☣️☣️☣️
     # ☠️☠️☠️☠️☠️☠️☠️☠️☠️☠️☠️☠️☠️☠️☠️☠️☠️
-    # THIS TOOK FOUR FUCKING DAYS TO DEBUG THE LAST TIME IT BROKE
+    # THIS TOOK FOUR ENTIRE DAYS TO DEBUG THE LAST TIME IT BROKE
 
     # Location functions 
 
@@ -240,7 +240,7 @@ class Abstract:
         # [transformation][currentDistortion] has to equal [targetDistortion]    <--------------------------------
         #                                                                                                        |
         # We can apply the inverse of the current distortion on the right                                        |
-        # of both sides of the equation without making it invalid                                                |          This stupid fucking arrow
+        # of both sides of the equation without making it invalid                                                |          This stupid arrow
         #                                                                                                        |          took longer to make than
         # [transformation][currentDistortion][currentDistortion]^-1 = [targetDistortion][currentDistortion]^-1   |          everything else in this 
         #                                                                                                        |          explanation
@@ -312,8 +312,8 @@ class Abstract:
         if self.parent:
             self.distort_objective(self.parent.objectiveDistortion.apply(transformation).apply(self.parent.objectiveDistortion.get_3x3_inverse()))
             # We need to appply the inverse at the end of this function but *not* set_distortion_relative
-            # becasue reasons. I'll be entirely honest idfk why I just applied the inverse on a whim while
-            # bug fixing and it worked but it fucked up set_distortion_relative when I put it on there
+            # becasue reasons. I'll be entirely honest idk why I just applied the inverse on a whim while
+            # bug fixing and it worked but it messed up set_distortion_relative when I put it on there
 
             # I think it's something do with how transformation is a difference and it isn't relative to 
             # actual points?
