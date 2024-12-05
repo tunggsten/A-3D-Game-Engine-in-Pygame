@@ -297,12 +297,12 @@ class Matrix:
                        [selfContents[2][0] * crossContents[0][0] - selfContents[0][0] * crossContents[2][0]],
                        [selfContents[0][0] * crossContents[1][0] - selfContents[1][0] * crossContents[0][0]],])
         
-    def add(self, matrixToAddIdk):
-        if self.order != matrixToAddIdk.get_order():
-            print(f"{self.get_contents()} and {matrixToAddIdk.get_contents()} have different orders dumbass you can't add them")
+    def add(self, matrixToAdd):
+        if self.order != matrixToAdd.get_order():
+            print(f"{self.get_contents()} and {matrixToAdd.get_contents()} have different orders dumbass you can't add them")
             return None
         
-        contentsToAdd = matrixToAddIdk.get_contents()
+        contentsToAdd = matrixToAdd.get_contents()
         
         result = []
         
