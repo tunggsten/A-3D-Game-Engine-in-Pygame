@@ -314,14 +314,14 @@ class Matrix:
         
         return Matrix(result)
     
-    def subtract(self, matrixToSubtractIdk): # This looks completely useless and honestly I thought the same,
+    def subtract(self, matrixToSubtract): # This looks completely useless and honestly I thought the same,
                                              # but it's cumbersome manually negating a matrix every time you
                                              # want to subtract it, so this should be a little bit faster
-        if self.order != matrixToSubtractIdk.get_order():
+        if self.order != matrixToSubtract.get_order():
             print("These have different orders dumbass you can't subtract them")
             return None
         
-        contentsToSubtract = matrixToSubtractIdk.get_contents()
+        contentsToSubtract = matrixToSubtract.get_contents()
         
         result = []
         
