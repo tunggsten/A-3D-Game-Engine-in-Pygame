@@ -74,7 +74,7 @@ teapot = Wavefront("lowPolyUtahTeapot.obj",
                    Matrix([[5],
                           [0],
                           [0]]), 
-                  I3.multiply_contents(0.15), # This will shrink it down to 15% of it's size.
+                  I3.multiply_scalar(0.15), # This will shrink it down to 15% of it's size.
                   texture=blawg)
 
 environment.add_child_relative(teapot)
@@ -86,7 +86,7 @@ leftWall = Body(1, 0.8, 5, False, Matrix([[-2],
                                                          [0, 0, 1]]))
 leftWallCollider = PlaneCollider(4, 4, leftWall)
 
-leftWallVisual = Plane((3, 3), (0, 0, 0), True, ORIGIN, I3.multiply_contents(4))
+leftWallVisual = Plane((3, 3), (0, 0, 0), True, ORIGIN, I3.multiply_scalar(4))
 leftWall.add_child_relative(leftWallVisual)
 
 environment.add_child_relative(leftWall)
@@ -98,7 +98,7 @@ backWall = Body(1, 0.8, 5, False, Matrix([[0],
                                                          [0, -1, 0]]))
 backWallCollider = PlaneCollider(4, 4, backWall)
 
-backWallVisual = Plane((3, 3), (0, 0, 0), True, ORIGIN, I3.multiply_contents(4))
+backWallVisual = Plane((3, 3), (0, 0, 0), True, ORIGIN, I3.multiply_scalar(4))
 backWall.add_child_relative(backWallVisual)
 
 environment.add_child_relative(backWall)
@@ -113,7 +113,7 @@ environment.add_child_relative(floor)
 
 floorCollider = PlaneCollider(8, 8, floor)
 
-floorVisual = Plane((6, 6), (0, 0, 0), True, ORIGIN, I3.multiply_contents(8))
+floorVisual = Plane((6, 6), (0, 0, 0), True, ORIGIN, I3.multiply_scalar(8))
 floor.add_child_relative(floorVisual)
 
 # Ball
@@ -134,7 +134,7 @@ for i in range(5):
 
     ballCollider = SphereCollider(0.25, ball)
 
-    ballVisual = Cube((0, 0, 0), True, ORIGIN, I3.multiply_contents(0.5))
+    ballVisual = Cube((0, 0, 0), True, ORIGIN, I3.multiply_scalar(0.5))
     ballVisual.change_tris_to_gradient((248, 54, 119), (58, 244, 189), (229, 249, 54))
 
     ball.add_child_relative(ballVisual)

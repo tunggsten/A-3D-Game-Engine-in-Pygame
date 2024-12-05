@@ -44,9 +44,9 @@ class Matrix:
 
         return Matrix(result)
          
-    def multiply_contents(self, coefficient: float): # If you need to divide a matrix, you can just multiply 
+    def multiply_scalar(self, coefficient: float): # If you need to divide a matrix, you can just multiply 
                                                      # it by the reciprocal of your coefficient.        
-                                                     # Like this: Matrix.multiply_contents(1 / numberYoureDividingBy)
+                                                     # Like this: Matrix.multiply_scalar(1 / numberYoureDividingBy)
         multiplied = []
         
         for i in range(self.order[0]):
@@ -118,7 +118,7 @@ class Matrix:
         ]
         
         try:
-            return Matrix(inverse).multiply_contents(1 / det)
+            return Matrix(inverse).multiply_scalar(1 / det)
         except:
             print(f"The matrix {self} is probably singular, so it has no inverse")
             return None
@@ -268,7 +268,7 @@ class Matrix:
                 row.append(workingContents[j][i])
             transposedCofactors.append(row)
         
-        return Matrix(transposedCofactors).multiply_contents(1 / det)
+        return Matrix(transposedCofactors).multiply_scalar(1 / det)
             
         # Thank god it's over! I hope your enjoyed our munity through 3x3 matrix inversion.
         # I'm probably not going to mansplain as much in the rest of my code but for other complex

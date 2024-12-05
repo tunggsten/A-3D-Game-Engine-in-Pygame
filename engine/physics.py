@@ -44,8 +44,8 @@ class SphereCollider(Abstract):
             if collide:
                 if sphere.body.dynamic:
                     if self.body.dynamic:
-                        sphere.body.set_location_objective(sphere.body.objectiveLocation.add(difference.multiply_contents(0.5)))
-                        self.body.set_location_objective(self.body.objectiveLocation.subtract(difference.multiply_contents(0.5)))
+                        sphere.body.set_location_objective(sphere.body.objectiveLocation.add(difference.multiply_scalar(0.5)))
+                        self.body.set_location_objective(self.body.objectiveLocation.subtract(difference.multiply_scalar(0.5)))
 
                     else:
                         sphere.body.set_location_objective(sphere.body.objectiveLocation.add(difference))
@@ -230,16 +230,16 @@ class Body(Abstract):
             # a = F /
             #     m
             if frameDelta > 0:
-                acceleration = resultantForce.multiply_contents(1 / self.mass)
+                acceleration = resultantForce.multiply_scalar(1 / self.mass)
 
                 # Process velocity using v = u + at
-                self.velocity = self.velocity.add(acceleration.multiply_contents(frameDelta))
+                self.velocity = self.velocity.add(acceleration.multiply_scalar(frameDelta))
 
                 # Translate according to velocity
-                self.translate_objective(self.velocity.multiply_contents(frameDelta))
+                self.translate_objective(self.velocity.multiply_scalar(frameDelta))
         else:
             # If it's kinematic, we can just say it's velocity is its change in position since the last frame over the frame delta
-            self.velocity = self.objectiveLocation.subtract(self.oldObjectiveLocation).multiply_contents(1 / frameDelta)
+            self.velocity = self.objectiveLocation.subtract(self.oldObjectiveLocation).multiply_scalar(1 / frameDelta)
             self.oldObjectiveLocation = self.objectiveLocation
 
         self.clear_forces()
@@ -328,16 +328,16 @@ def process_bodies(frameDelta):
                                 v1 = ((m1 * u1) + (m2 * u2) + (m2 * e * (u2 - u1)) /
                                                         m1 + m2)
 
-                                bodyImpulse = collisionNormal.multiply_contents((m1 * v1) - (m1 * u1))
+                                bodyImpulse = collisionNormal.multiply_scalar((m1 * v1) - (m1 * u1))
 
-                                body.add_force(bodyImpulse.multiply_contents(1 / frameDelta))
+                                body.add_force(bodyImpulse.multiply_scalar(1 / frameDelta))
 
                                 # Calculate impulse on the other body
                                 otherMomentum = (m1 * u1) + (m2 * u2) - (m1 * v1)
 
-                                otherImpulse = collisionNormal.multiply_contents(otherMomentum - (m2 * u2))
+                                otherImpulse = collisionNormal.multiply_scalar(otherMomentum - (m2 * u2))
 
-                                otherBody.add_force(otherImpulse.multiply_contents(1 / frameDelta))
+                                otherBody.add_force(otherImpulse.multiply_scalar(1 / frameDelta))
 
                             else:
                                 # Here, we already know the other body's velocity, which simplifiys our calculations a bit.
@@ -357,9 +357,9 @@ def process_bodies(frameDelta):
 
                                 bodyMomentum = m1 * (e * (u2 - u1) + v2)
 
-                                bodyImpulse = collisionNormal.multiply_contents(bodyMomentum - (m1 * u1))
+                                bodyImpulse = collisionNormal.multiply_scalar(bodyMomentum - (m1 * u1))
 
-                                body.add_force(bodyImpulse.multiply_contents(1 / frameDelta))
+                                body.add_force(bodyImpulse.multiply_scalar(1 / frameDelta))
 
                             # Now we've sorted out exchange of momentum, we need to apply friction.
 
@@ -373,11 +373,11 @@ def process_bodies(frameDelta):
                             limitingFriction = (body.roughness + otherBody.roughness) / 2
                             
                             # This is the direction opposing the body's movement parallel to the collision surface
-                            bodyOpposingForce = body.velocity.subtract(collisionNormal.multiply_contents(u1)).multiply_contents(-limitingFriction * m1)
+                            bodyOpposingForce = body.velocity.subtract(collisionNormal.multiply_scalar(u1)).multiply_scalar(-limitingFriction * m1)
 
                             body.add_force(bodyOpposingForce)
                             
-                            otherBodyOpposingForce = otherBody.velocity.subtract(collisionNormal.multiply_contents(u2)).multiply_contents(-limitingFriction * m2)
+                            otherBodyOpposingForce = otherBody.velocity.subtract(collisionNormal.multiply_scalar(u2)).multiply_scalar(-limitingFriction * m2)
 
                             otherBody.add_force(otherBodyOpposingForce)
 
@@ -415,9 +415,9 @@ def process_bodies(frameDelta):
 
                                 otherMomentum = m2 * (v1 - e * (u2 - u1))
 
-                                otherImpulse = collisionNormal.multiply_contents(otherMomentum - (m2 * u2))
+                                otherImpulse = collisionNormal.multiply_scalar(otherMomentum - (m2 * u2))
 
-                                otherBody.add_force(otherImpulse.multiply_contents(1 / frameDelta))
+                                otherBody.add_force(otherImpulse.multiply_scalar(1 / frameDelta))
 
                         
                             # Now we've sorted out exchange of momentum, we need to apply friction.
@@ -432,12 +432,12 @@ def process_bodies(frameDelta):
                             friction = (body.roughness + otherBody.roughness) / 2
                             
                             # This is the direction opposing the body's movement parallel to the collision surface
-                            bodyOpposingForce = body.velocity.subtract(collisionNormal.multiply_contents(u1)).multiply_contents(-friction * m1)
+                            bodyOpposingForce = body.velocity.subtract(collisionNormal.multiply_scalar(u1)).multiply_scalar(-friction * m1)
 
                             # As you can see, this isn't an accurate simulation of friction. But it's close enough!
                             body.add_force(bodyOpposingForce)
                             
-                            otherBodyOpposingForce = otherBody.velocity.subtract(collisionNormal.multiply_contents(u2)).multiply_contents(-friction * m2)
+                            otherBodyOpposingForce = otherBody.velocity.subtract(collisionNormal.multiply_scalar(u2)).multiply_scalar(-friction * m2)
 
                             otherBody.add_force(otherBodyOpposingForce)
                 
