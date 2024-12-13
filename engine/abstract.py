@@ -154,7 +154,7 @@ class Abstract:
             
             del self
         else:
-            print("Why tf are you trying to delete the origin? Not cool man")
+            print("Why are you trying to delete the origin? Not cool man")
 
     def kill_self_and_substracts(self): # Neither does this
         if self.children:

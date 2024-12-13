@@ -9,8 +9,8 @@ GRAVFIELDSTRENGTH = 9.81 # The strength of the scene's gravitational field
 
                          # It's named like a constant but you're free to change it if you want
 
-GRAVDIRECTION = Matrix([[0],
-                        [-1],
+GRAVDIRECTION = Matrix([[0],  # This is the direction gravity points in as a vector. You probably won't need to
+                        [-1], # change this unless it's for a game mechanic
                         [0]])
 
 
