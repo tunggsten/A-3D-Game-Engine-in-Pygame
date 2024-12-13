@@ -1,6 +1,8 @@
 ![Yeentooth Logo](./readmephotos/logo.png)
 # Yeentooth Engine - A simple 3D game engine made for my A-Level Computer Science coursework.
 
+by Osmund Beswick (i'm putting my name here so the exam moderators know this isn't just some rando's repo that i've written about ☠️)
+
 ### This is a simple game engine made with Python and Pygame. This is meant for demonstration rather than actual use (since I'm sure most people don't want their game to run sequentially on one cpu core), but if I make it faster in the future then maybe I'll use it for something.
 
 ![A rotating teapot with a cat's face projected onto its surface in a grey room with a rainbow wall, rendered with Yeentooth](./readmephotos/sampleScene.gif)
@@ -25,6 +27,6 @@ On top of that, you have the option to use real-time surface normal lighting for
 
 There's also stereo sound effects! 🤯🤯🤯 #revolutionary
 
-It's pretty janky but I added a basic physics engine you can use for collisions; there's no angular velocity or anything but it should work well enough for most things. Big thanks to @something12356 for help with the restitution mechanics!
+It's pretty janky but I added a basic physics engine you can use for collisions; there's no angular velocity or anything but it should work well enough for most things. Big thanks to @something12356 for explainging the restitution maths to me!
 
 But yeah, if you want to then have a play around with it! You can run and look through sampleScene to see how everything works, and use it as a basis for your own game. If you make anything using this, don't hesitate to show me! I'd love to see what you guys can do 👍
