@@ -59,13 +59,15 @@ class Listener(Abstract):
     def listen(self):
         sounds = ROOT.get_substracts_of_type(SoundEffect)
 
+        inversion = self.objectiveDistortion.get_3x3_inverse()
+
         for sound in sounds:
             if sound.channel:
                 channel = sound.channel
 
                 differenceVector = sound.objectiveLocation.subtract(self.objectiveLocation)
                 distance = differenceVector.get_magnitude()
-                directionVector = self.objectiveDistortion.get_3x3_inverse().apply(differenceVector)
+                directionVector = inversion.apply(differenceVector)
 
                 # Calculate the angle both "ears" are at to the sound
 
@@ -88,7 +90,7 @@ class Listener(Abstract):
 
                 baseVolume = clamp(self.volume * sound.volume * (1 / ((distance / self.sensitivity) ** 2)), 0, sound.volume)
 
-                # Okay, now we're just quieting the further ear.
+                # Now we're just quieting the further ear.
                 if directionVector.get_contents()[0][0] > 0:
                     channel.set_volume(baseVolume * (1 - (-angle * HEADSHADOWAMOUNT)), baseVolume)
                 else:
