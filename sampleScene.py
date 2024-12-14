@@ -292,7 +292,7 @@ def analyse_framerate(frameDelta:float):
     if frameDelta > 0:
         textSurface = font.render(f"{round(1 / frameDelta, 3)} fps", False, (0, 0, 0))
     else:
-        textSurface = font.render("tf your framerate's 0 somehow", False, (0, 0, 0))
+        textSurface = font.render("your framerate's 0 somehow", False, (0, 0, 0))
         
     WINDOW.blit(textSurface, (0, 0))
         
