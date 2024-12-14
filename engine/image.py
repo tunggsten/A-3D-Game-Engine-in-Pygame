@@ -118,15 +118,15 @@ class Image(): # This is like a shitty fake version of pygame.Surface
         self.colorspace = colorspace
         
         if colorspace:
-            pixel = (0, 0, 0)
+            defaultPixel = (0, 0, 0)
         else:
-            pixel = 0.0
+            defaultPixel = 0.0
 
         self.contents = []
         for row in range(resolution[1]):
             self.contents.append([])
             for pixel in range(resolution[0]):
-                self.contents[row].append((0, 0, 0) if colorspace else 0.0)
+                self.contents[row].append(defaultPixel)
 
     def set_resolution(self, resolution:tuple):
         self.resolution = resolution
