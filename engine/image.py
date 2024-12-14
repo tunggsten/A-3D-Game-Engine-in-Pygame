@@ -259,7 +259,6 @@ class Image(): # This is like a shitty fake version of pygame.Surface
         # Find the middle vertex
         heights = [vertex1[1], vertex2[1], vertex3[1]]
 
-        '''
         # Believe it or not, this is a sorting algorithm.
         if heights[0] > heights[1]:
             if heights[0] > heights[2]:
@@ -295,24 +294,7 @@ class Image(): # This is like a shitty fake version of pygame.Surface
                 colours = [colour2, colour1, colour3]
                 depths = [depth2, depth1, depth3]
                 uvs = [uv2, uv1, uv3]
-                '''
-        
-        # This is a version that uses mergesort for a performance comparison.
-        vertices = [vertex1, vertex2, vertex3]
-        colours = [colour1, colour2, colour3]
-        depths = [depth1, depth2, depth3]
-        uvs = [uv1, uv2, uv3]
-
-        # Because each value is linked, I'll do any swaps with all of them. 
-        listsToSort = [heights, vertices, colours, depths, uvs]
-
-        def mergeSort(lists):
-            unsortedList = lists[0]
-
-            
-
-
-
+                
 
         triangleHeight = vertices[0][1] - vertices[2][1]
         topToBottomHorizontal = vertices[0][0] - vertices[2][0]
