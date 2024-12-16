@@ -326,7 +326,7 @@ def process_bodies(frameDelta):
                             if otherBody.dynamic:
                                 # Calculate impulse on body
                                 v1 = ((m1 * u1) + (m2 * u2) + (m2 * e * (u2 - u1)) /
-                                                        m1 + m2)
+                                                        (m1 + m2))
 
                                 bodyImpulse = collisionNormal.multiply_scalar((m1 * v1) - (m1 * u1))
 
