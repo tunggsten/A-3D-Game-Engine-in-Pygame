@@ -42,17 +42,20 @@ class SphereCollider(Abstract):
 
         if difference.get_magnitude() < self.radius + sphere.radius:
             if collide:
+
+                amountToShove = self.radius + sphere.radius - difference.get_magnitude()
+
                 if sphere.body.dynamic:
                     if self.body.dynamic:
-                        sphere.body.set_location_objective(sphere.body.objectiveLocation.add(difference.multiply_scalar(0.5)))
-                        self.body.set_location_objective(self.body.objectiveLocation.subtract(difference.multiply_scalar(0.5)))
+                        sphere.body.set_location_objective(sphere.body.objectiveLocation.add(difference.multiply_scalar(amountToShove * 0.5)))
+                        self.body.set_location_objective(self.body.objectiveLocation.subtract(difference.set_magnitude(amountToShove * 0.5)))
 
                     else:
-                        sphere.body.set_location_objective(sphere.body.objectiveLocation.add(difference))
+                        sphere.body.set_location_objective(sphere.body.objectiveLocation.add(difference.set_magnitude(amountToShove)))
 
                 else:
                     if self.body.dynamic:
-                        self.body.set_location_objective(self.body.objectiveLocation.subtract(difference))
+                        self.body.set_location_objective(self.body.objectiveLocation.subtract(difference.set_magnitude(amountToShove)))
                     
             return True
 
