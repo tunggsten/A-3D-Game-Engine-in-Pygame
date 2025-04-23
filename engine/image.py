@@ -111,7 +111,7 @@ def interpolate_coordinate(coordinate1:tuple, coordinate2:tuple, t:float):
     
 
 
-class Image(): # This is like a shitty fake version of pygame.Surface
+class Image(): # This is like an awful fake version of pygame.Surface
     def __init__(self, resolution:tuple, pixelSize:tuple, colorspace:bool):
         self.resolution = resolution
         self.pixelSize = pixelSize
