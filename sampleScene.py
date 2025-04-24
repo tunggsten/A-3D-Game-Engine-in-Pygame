@@ -186,6 +186,12 @@ sun.rotate_euler_radians(0, math.pi / 3, 0)
 environment.add_child_relative(sun)
 
 
+passthroughTest = TripVolume()
+passthroughTestCollider = SphereCollider(3, passthroughTest)
+
+environment.add_child_relative(passthroughTest)
+
+
 
 # ---------------- PER FRAME PROCESS FUNCTIONS ----------------
 
@@ -282,6 +288,9 @@ def process_sensors():
 
     for listener in ROOT.get_substracts_of_type(Listener):
         listener.listen()
+
+    print(f"passthroughTest is currently intersecting with {passthroughTest.intersections}")
+    print(f"passthroughTest: {passthroughTest.get_location_objective().get_contents()}")
             
 
             
@@ -323,6 +332,8 @@ while running:
     process_teapot(frameDelta, keys)
     process_lights(frameDelta)
     process_balls()
+
+    print(passthroughTest.intersections)
 
     process_bodies(frameDelta)
         

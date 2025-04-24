@@ -212,6 +212,7 @@ class Body(Abstract):
         self.roughness = roughness if roughness is not None else 10
 
         self.dynamic = dynamic if dynamic is not None else True
+        self.passthrough = False
 
         self.oldObjectiveLocation = self.objectiveLocation # We store this so we can figure out how fast something's
                                                                 # moved even when it's been translated through code
@@ -228,7 +229,7 @@ class Body(Abstract):
 
         self.gravityDirection = gravityDirection if gravityDirection else GRAVDIRECTION
 
-        intersections = []
+        self.intersections = []
 
     def set_collider(self, collider:Abstract):
         self.collider = collider
@@ -270,9 +271,22 @@ class Body(Abstract):
         self.clear_forces()
 
 
+class TripVolume(Body):
+    def __init__(self,
+                 location:Matrix=None,
+                 distortion:Matrix=None, 
+                 collider:Abstract=None,
+                 velocity:Matrix=None,
+                 tags:list[str]=None, 
+                 gravityDirection:Matrix=None):
+        super().__init__(1, 0, 1, False, location, distortion, collider, velocity, tags, gravityDirection)
+
+        self.passthrough = True
+
+
 
 def process_bodies(frameDelta):
-    bodies = ROOT.get_substracts_of_type(Body)
+    bodies = ROOT.get_substracts_of_type(Body) + ROOT.get_substracts_of_type(TripVolume)
 
     bodiesToCheck = []
 
@@ -292,7 +306,9 @@ def process_bodies(frameDelta):
 
                     for otherBody in bodiesToCheck:
 
-                        if body.collider.intersect(otherBody.collider, True):
+                        collisionStatus = not (body.passthrough or otherBody.passthrough)
+
+                        if body.collider.intersect(otherBody.collider, collisionStatus) and collisionStatus:
 
 
                             
@@ -414,7 +430,10 @@ def process_bodies(frameDelta):
                             
                 else:
                     for otherBody in bodies:
-                        if body.collider.intersect(otherBody.collider, True):
+
+                        collisionStatus = not(body.passthrough or otherBody.passthrough)
+
+                        if body.collider.intersect(otherBody.collider, collisionStatus) and collisionStatus:
 
                             collisionNormal = body.collider.get_collision_normal(otherBody.collider)
 
@@ -475,4 +494,3 @@ def process_bodies(frameDelta):
                     
         for body in bodies:
             body.apply_forces(frameDelta)
-            print(body.intersections)
