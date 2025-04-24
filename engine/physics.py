@@ -65,7 +65,7 @@ class SphereCollider(Abstract):
         relativeToPlane = plane.objectiveDistortion.get_3x3_inverse().apply(self.objectiveLocation.subtract(plane.objectiveLocation)).get_contents()
 
         if (abs(relativeToPlane[0][0]) < plane.width / 2 and 
-                relativeToPlane[1][0] < self.radius and 
+                abs(relativeToPlane[1][0]) < self.radius and 
                 abs(relativeToPlane[2][0]) < plane.length / 2):
             
             if collide and self.body.dynamic:
@@ -82,7 +82,17 @@ class SphereCollider(Abstract):
         return False
     
     def intersect(self, collider:Abstract, collide:bool=False):
-        return self.intersectionMethods[type(collider)](collider, collide)
+        if self.intersectionMethods[type(collider)](collider, collide):
+
+            if collider.body not in self.body.intersections:
+                self.body.intersections.append(collider.body)
+                collider.body.intersections.append(self.body)
+
+            return True
+        
+        else:
+            return False
+    
     
 
     
@@ -135,7 +145,7 @@ class PlaneCollider(Abstract):
         relativeToPlane = self.objectiveDistortion.get_3x3_inverse().apply(sphere.objectiveLocation.subtract(self.objectiveLocation)).get_contents()
 
         if (abs(relativeToPlane[0][0]) < self.width / 2 and 
-                relativeToPlane[1][0] < sphere.radius and 
+                abs(relativeToPlane[1][0]) < sphere.radius and 
                 abs(relativeToPlane[2][0]) < self.length / 2):
             
             if collide and sphere.body.dynamic:
@@ -155,7 +165,16 @@ class PlaneCollider(Abstract):
     
     def intersect(self, collider:Abstract, collide:bool=False):
         #print(f"Collider: {collider}")
-        return self.intersectionMethods[type(collider)](collider, collide)
+        if self.intersectionMethods[type(collider)](collider, collide):
+
+            if collider.body not in self.body.intersections:
+                self.body.intersections.append(collider.body)
+                collider.body.intersections.append(self.body)
+
+            return True
+        
+        else:
+            return False
     
 
 
@@ -209,6 +228,8 @@ class Body(Abstract):
 
         self.gravityDirection = gravityDirection if gravityDirection else GRAVDIRECTION
 
+        intersections = []
+
     def set_collider(self, collider:Abstract):
         self.collider = collider
         self.add_child_relative(collider)
@@ -232,6 +253,7 @@ class Body(Abstract):
 
             # a = F /
             #     m
+
             if frameDelta > 0:
                 acceleration = resultantForce.multiply_scalar(1 / self.mass)
 
@@ -255,6 +277,8 @@ def process_bodies(frameDelta):
     bodiesToCheck = []
 
     for body in bodies:
+        body.intersections = []
+
         bodiesToCheck.append(body) # I had to do this otherwise they'd just be the same list
 
     if frameDelta > 0:
@@ -267,8 +291,10 @@ def process_bodies(frameDelta):
                     body.add_force(body.gravityDirection.set_magnitude(GRAVFIELDSTRENGTH * body.mass))
 
                     for otherBody in bodiesToCheck:
-                        
+
                         if body.collider.intersect(otherBody.collider, True):
+
+
                             
                             # Here, we figure out the forces each body experiences.
 
@@ -449,3 +475,4 @@ def process_bodies(frameDelta):
                     
         for body in bodies:
             body.apply_forces(frameDelta)
+            print(body.intersections)
