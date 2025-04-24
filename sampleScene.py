@@ -287,11 +287,7 @@ def process_sensors():
     camera.render()
 
     for listener in ROOT.get_substracts_of_type(Listener):
-        listener.listen()
-
-    print(f"passthroughTest is currently intersecting with {passthroughTest.intersections}")
-    print(f"passthroughTest: {passthroughTest.get_location_objective().get_contents()}")
-            
+        listener.listen()   
 
             
 pygame.font.init()
@@ -332,8 +328,6 @@ while running:
     process_teapot(frameDelta, keys)
     process_lights(frameDelta)
     process_balls()
-
-    print(passthroughTest.intersections)
 
     process_bodies(frameDelta)
         
