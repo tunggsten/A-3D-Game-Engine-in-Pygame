@@ -329,7 +329,11 @@ while running:
     process_lights(frameDelta)
     process_balls()
 
-    process_bodies(frameDelta)
+    print(f"\n\n\n\n\n\n\nIntersecting with: {passthroughTest.intersections}")
+
+    physicsDelta = frameDelta / 2
+    for i in range(2):
+        process_bodies(physicsDelta)
         
     process_sensors()
         
