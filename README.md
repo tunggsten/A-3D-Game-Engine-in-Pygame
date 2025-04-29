@@ -14,13 +14,13 @@ So it turns out this was because I was printing 13,429 debug messages to the con
 
 ## **Info:**
 
-In Yeentooth, you get fairly precice control over everything. Things in space are called Abstracts, which have a location and a set of axes which its children lie on (called a distortion). You can move, rotate and translate stuff, and their substracts will move accordingly.
+In my engine, you get fairly precice control over everything. Things in space are called Abstracts, which have a location and a set of axes which its children lie on (called a distortion). You can move, rotate and translate stuff, and their substracts will move accordingly.
 
 You get fine control over the gameloop, as you create and manage it for each of your scenes. Check out sampleScene.py to see how it works! While it's less intuitive structuring an engine like this, I wanted to let users have much finer control over how their game runs 
 
 You can import UV mapped Wavefront models with textures, as well as use all 2 (!!!) primitive shape generators I've built in.
 
-For rendering, Yeentooth uses custom (aka slow ☠️) implementations of common graphical and mathematical functions, from matrix multiplication to triangle filling, built using Pygame's graphics engine. This makes it easier to modify and expand upon depending on your needs if you want to do something specific (not a cope i swear)
+For rendering, this uses custom (aka slow ☠️) implementations of common graphical and mathematical functions, from matrix multiplication to triangle filling, built using Pygame's graphics engine. This makes it easier to modify and expand upon depending on your needs if you want to do something specific (not a cope i swear)
 
 On top of that, you have the option to use real-time surface normal lighting for your models if you'd like an even lower framerate! 😊
 
