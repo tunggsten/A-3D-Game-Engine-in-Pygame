@@ -1,4 +1,4 @@
-# A simple 3D game engine made for my A-Level Computer Science coursework.
+# A 3D game engine made for my A-Level Computer Science coursework.
 
 by Osmund Beswick (i'm putting my name here so the exam moderators know this isn't just some rando's repo that i've written about ☠️)
 
