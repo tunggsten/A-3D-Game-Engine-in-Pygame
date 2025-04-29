@@ -9,7 +9,7 @@ pygame.init()
 SCREENSIZE = (640, 480)
 SCREENSIZEFROMCENTER = (SCREENSIZE[0] / 2, SCREENSIZE[1] / 2)
 WINDOW = pygame.display.set_mode(SCREENSIZE)
-pygame.display.set_caption("yeentooth")
+pygame.display.set_caption("tooth")
 clock = pygame.time.Clock()
 
 
